@@ -1,0 +1,249 @@
+Designing a menstrual tracking app with a calendar and notepad involves creating a robust and user-friendly system.
+Below is a high-level design of the logic, including the necessary classes, relationships, and features.
+
+---
+
+### **Core Features**
+1. **Menstrual Cycle Tracking**:
+   - Track menstrual cycles, including start and end dates.
+   - Predict future cycles based on historical data.
+   - Log symptoms, moods, and other health-related data.
+
+2. **Calendar Integration**:
+   - Display menstrual cycle data on a calendar.
+   - Allow users to add custom events or reminders.
+
+3. **Notepad**:
+   - Provide a space for users to jot down notes, thoughts, or observations.
+   - Link notes to specific dates or events.
+
+---
+
+### **Class Design**
+Here’s a breakdown of the classes and their relationships:
+
+#### **1. User**
+- Represents the app user.
+- **Attributes**:
+  - `userId: String` (unique identifier)
+  - `name: String`
+  - `email: String`
+  - `age: Int`
+  - `cycleLength: Int` (average length of menstrual cycle)
+  - `periodLength: Int` (average length of period)
+- **Methods**:
+  - `updateProfile()`
+  - `setCycleLength()`
+  - `setPeriodLength()`
+
+#### **2. Cycle**
+- Represents a single menstrual cycle.
+- **Attributes**:
+  - `cycleId: String` (unique identifier)
+  - `startDate: Date`
+  - `endDate: Date`
+  - `userId: String` (links to the User class)
+  
+- **Methods**:
+  - `calculateCycleLength()`
+  - `predictNextCycle()`
+
+#### 2.1 Period **
+- Represents a period within a cycle
+- periodId
+- cycleId
+- startDate
+- endDate
+-List<PeriodDay>
+
+####
+
+### 2.2 PeriodDay
+-Represents a PeriodDay
+-Date
+-periodId
+-flow [1-4]
+**Methods
+-logflow()
+-updateflow()
+
+
+
+###
+#### **3. Symptom**
+- Represents symptoms logged by the user.
+- **Attributes**:
+  - `symptomId: String` (unique identifier)
+  - `name: String` (e.g., "cramps", "headache")
+  - `date: Date`
+  - `userId: String` (links to the User class)
+- **Methods**:
+  - `logSymptom()`
+  - `updateSymptom()`
+
+#### **4. Mood**
+- Represents moods logged by the user.
+- **Attributes**:
+  - `moodId: String` (unique identifier)
+  - `name: String` (e.g., "happy", "sad")
+  - `date: Date`
+  - `userId: String` (links to the User class)
+- **Methods**:
+  - `logMood()`
+  - `updateMood()`
+
+#### **5. Calendar**
+- Manages the calendar view and events.
+- **Attributes**:
+  - `calendarId: String` (unique identifier)
+  - `userId: String` (links to the User class)
+  - `events: List<Event>`
+  - Map<moodId, mood> (grouped moods to select from )
+  - Map<symptomid, symptom> (grouped symptoms to select from )
+- **Methods**:
+  - `addEvent()`
+  - `removeEvent()`
+  - `displayCalendar()`
+
+#### **6. Event**
+- Represents a calendar event (e.g., period start, reminder).
+- **Attributes**:
+  - `eventId: String` (unique identifier)
+  - `title: String`
+  - `date: Date`
+  - `userId: String` (links to the User class)
+- **Methods**:
+  - `createEvent()`
+  - `editEvent()`
+
+#### **7. Notepad**
+- Manages user notes.
+- **Attributes**:
+  - `noteId: String` (unique identifier)
+  - `content: String`
+  - `date: Date`
+  - `userId: String` (links to the User class)
+- **Methods**:
+  - `addNote()`
+  - `editNote()`
+  - `deleteNote()`
+
+### **8. Day**
+
+-Represents a day in a calendar
+  -**Attributes**:
+    -date: DateTime 
+    -symptomsList
+    -period day
+    -period end or period start
+    -noteId
+    -mood list
+
+
+
+---
+
+### **Relationships**
+1. **User ↔ Cycle**:
+   - A `User` can have multiple `Cycle` instances.
+   - One-to-many relationship.
+
+2. **Cycle ↔ Symptom**:
+   - A `Cycle` can have multiple `Symptom` instances.
+   - One-to-many relationship.
+
+3. **Cycle ↔ Mood**:
+   - A `Cycle` can have multiple `Mood` instances.
+   - One-to-many relationship.
+
+4. **User ↔ Calendar**:
+   - A `User` has one `Calendar`.
+   - One-to-one relationship.
+
+5. **Calendar ↔ Event**:
+   - A `Calendar` can have multiple `Event` instances.
+   - One-to-many relationship.
+
+6. **User ↔ Notepad**:
+   - A `User` can have multiple `Notepad` entries.
+   - One-to-many relationship.
+
+---
+
+### **Database Schema**
+Here’s a simplified database schema for the app:
+
+- **Users Table**:
+  - `userId (Primary Key)`
+  - `name`
+  - `email`
+  - `age`
+  - `cycleLength`
+  - `periodLength`
+
+- **Cycles Table**:
+  - `cycleId (Primary Key)`
+  - `startDate`
+  - `endDate`
+  - `userId (Foreign Key)`
+
+- **Symptoms Table**:
+  - `symptomId (Primary Key)`
+  - `name`
+  - `severity`
+  - `date`
+  - `userId (Foreign Key)`
+
+- **Moods Table**:
+  - `moodId (Primary Key)`
+  - `name`
+  - `date`
+  - `userId (Foreign Key)`
+
+- **Calendar Table**:
+  - `calendarId (Primary Key)`
+  - `userId (Foreign Key)`
+
+- **Events Table**:
+  - `eventId (Primary Key)`
+  - `title`
+  - `date`
+  - `userId (Foreign Key)`
+
+- **Notepad Table**:
+  - `noteId (Primary Key)`
+  - `content`
+  - `date`
+  - `userId (Foreign Key)`
+
+---
+
+### **Workflow**
+1. **User Onboarding**:
+   - Collect user details (age, average cycle length, etc.).
+   - Initialize the user’s calendar and notepad.
+
+2. **Cycle Tracking**:
+   - User logs the start and end dates of their period.
+   - App predicts the next cycle and displays it on the calendar.
+
+3. **Symptom and Mood Tracking**:
+   - User logs symptoms and moods daily.
+   - Data is linked to the current cycle.
+
+4. **Calendar Integration**:
+   - Display cycle dates, predicted dates, and custom events.
+   - Allow users to add reminders (e.g., for medication or appointments).
+
+5. **Notepad**:
+   - Users can add notes linked to specific dates.
+   - Notes can be edited or deleted.
+
+---
+
+### **Additional Features**
+- **Notifications**: Remind users of upcoming periods, ovulation windows, or logged symptoms.
+- **Data Visualization**: Provide charts or graphs for cycle trends, symptom frequency, and mood patterns.
+- **Export Data**: Allow users to export their data for sharing with healthcare providers.
+
+This design ensures a modular, scalable, and user-friendly app that meets the needs of its users while maintaining clean and maintainable code.
