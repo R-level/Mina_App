@@ -1,14 +1,13 @@
 class User {
-  String userId;
+  int? userId;
   String? name;
   String? email;
   int? age;
-  int cycleLength = 0; // average length of menstrual cycle
-  int periodLength = 0; // average length of period
+  int cycleLength; // average length of menstrual cycle
+  int periodLength; // average length of period
 
-  User(this.userId, {this.name, this.email, this.age, this.cycleLength = 0, this.periodLength = 0});
+  User({this.userId, this.name, this.email, this.age, this.cycleLength = 0, this.periodLength = 0});
 
-  String getUserId() => userId;
 
   void updateProfile({String? name, String? email, int? age}) {
     if (name != null) {
@@ -43,7 +42,7 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      map['userId'],
+      userId: map['userId'],
       name: map['name'],
       email: map['email'],
       age: map['age'],

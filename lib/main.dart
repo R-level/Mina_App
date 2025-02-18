@@ -15,10 +15,10 @@ WidgetsFlutterBinding.ensureInitialized();
   databaseFactory = databaseFactoryFfi;
 
 final dbHelper = DatabaseHelper();
-  var user = User('123', name: 'Jane Doe', email: 'jane.doe@example.com', age: 25, cycleLength: 28, periodLength: 5);
+  var user = User( name: 'Jane Doe', email: 'jane.doe@example.com', age: 25, cycleLength: 28, periodLength: 5);
   await dbHelper.insertUser(user);
 
-  var storedUser = await dbHelper.getUser('123');
+  var storedUser = await dbHelper.getUser('0');
   
    if (kDebugMode) {
     debugPrint(storedUser?.name);

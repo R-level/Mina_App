@@ -247,3 +247,68 @@ Here’s a simplified database schema for the app:
 - **Export Data**: Allow users to export their data for sharing with healthcare providers.
 
 This design ensures a modular, scalable, and user-friendly app that meets the needs of its users while maintaining clean and maintainable code.
+
+
+SQL script
+
+CREATE TABLE User (
+    UserId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT,
+    Email TEXT,
+    Age INTEGER,
+    PeriodLength INTEGER,
+    CycleLength INTEGER
+);
+
+CREATE TABLE Cycle (
+    CycleId INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserId INTEGER,
+    StartDate DATE,
+    EndDate DATE,
+    FOREIGN KEY (UserId) REFERENCES User(UserId)
+);
+
+CREATE TABLE Period (
+    PeriodId INTEGER PRIMARY KEY AUTOINCREMENT,
+    CycleId INTEGER,
+    PeriodStartDate DATE,
+    PeriodEndDate DATE,
+    FOREIGN KEY (CycleId) REFERENCES Cycle(CycleId)
+);
+
+CREATE TABLE Day (
+    Date TEXT PRIMARY KEY,
+    CycleId INTEGER,
+    isPeriodDay Boolean,
+    isPeriodStart Boolean,
+    isPeriodEnd Boolean,
+    NoteId INTEGER,
+    FOREIGN KEY (CycleId) REFERENCES Cycle(CycleId),
+    FOREIGN KEY (PeriodId) REFERENCES Period(PeriodId)
+);
+
+Alter TABLE Day(
+    ADD FOREIGN KEY (NoteId) REFERENCES Note(NoteId);
+);
+
+CREATE TABLE Note (
+    NoteId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Date DATE,
+    Text TEXT,
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+);
+
+CREATE TABLE Mood (
+    MoodId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Date DATE,
+    Name TEXT,
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+);
+
+CREATE TABLE Symptom (
+    SymptomId INTEGER PRIMARY KEY AUTOINCREMENT,
+    Date TEXT,
+    Name TEXT,
+    Severity INTEGER,
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+);

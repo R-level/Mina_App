@@ -3,22 +3,23 @@
 class Cycle {
   final String cycleId;
   final String userId;
-  final int cycleLength;
-  final int periodLength;
+  final DateTime startDate;
+  final DateTime endDate;
 
   Cycle({
     required this.userId,
     required this.cycleId,
-    required this.cycleLength,
-    required this.periodLength,
+    required this.startDate,
+    required this.endDate,
+  
   });
 
   Map<String, dynamic> toMap() {
     return {
       'cycleId': cycleId,
       'userId': userId,
-      'cycleLength': cycleLength,
-      'periodLength': periodLength,
+      'startDate': startDate,
+      'endDate': endDate,
     };
   }
 
@@ -26,8 +27,8 @@ class Cycle {
     return Cycle(
       userId: map['User.userId'],
       cycleId: map['cycleId'],
-      cycleLength : map['cycleLength'],
-      periodLength : map['periodLength'],
+      startDate : map['cycleLength'],
+      endDate : map['periodLength'],
     );
   }
 }
