@@ -7,10 +7,10 @@ class FourthPage extends StatefulWidget {
   const FourthPage({super.key});
 
   @override
-  _FourthPageState createState() => _FourthPageState();
+  FourthPageState createState() => FourthPageState();
 }
 
-class _FourthPageState extends State<FourthPage> {
+class FourthPageState extends State<FourthPage> {
   User? _user;
 
   @override
@@ -21,7 +21,7 @@ class _FourthPageState extends State<FourthPage> {
 
   Future<void> _fetchUser() async {
     final dbHelper = DatabaseHelper();
-    final user = await dbHelper.getUser('123'); // Replace '123' with the actual userId
+    final user = await dbHelper.getUser(123); // Replace '123' with the actual userId
     setState(() {
       _user = user;
     });

@@ -31,4 +31,6 @@ class Cycle {
       endDate : map['periodLength'],
     );
   }
+
+  get getCycleId => cycleId;
 }

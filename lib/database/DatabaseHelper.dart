@@ -3,6 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import 'package:mina_app/model/user.dart';
 import 'package:mina_app/model/cycle.dart';
+import 'package:mina_app/model/period.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 
@@ -109,6 +110,7 @@ await db.execute('''CREATE TABLE Symptom (
     FOREIGN KEY (Date) REFERENCES Day(Date)''');
   } 
 
+//##CRUD operations for User
   
   Future<void> insertUser(User user) async {
     final db = await database;
@@ -121,7 +123,7 @@ await db.execute('''CREATE TABLE Symptom (
     );
   }
 
-  Future<User?> getUser(String userId) async {
+  Future<User?> getUser(int userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'user',
@@ -136,6 +138,7 @@ await db.execute('''CREATE TABLE Symptom (
     }
   }
 
+//###CRUD operations for Cycle
 Future<void> insertCycle(Cycle cycle) async {
   final db = await database;
   await db.insert(
@@ -145,7 +148,7 @@ Future<void> insertCycle(Cycle cycle) async {
   );
 
 }
-Future<Cycle?> getCycle(String cycleId) async {
+Future<Cycle?> getCycle(int cycleId) async {
   final db = await database;
   final List<Map<String, dynamic>> maps = await db.query(
     'cycle',
@@ -158,5 +161,69 @@ Future<Cycle?> getCycle(String cycleId) async {
   } else {
     return null;
   }
+}
+
+Future<void>updateCycle(Cycle cycle) async {
+  final db = await database;
+  await db.update(
+    'cycle',
+    cycle.toMap(),
+    where: 'cycleId = ?',
+    whereArgs: [cycle.cycleId],
+  );
+}
+
+Future<void> deleteCycle(int cycleId) async {
+  final db = await database;
+  await db.delete(
+    'cycle',
+    where: 'cycleId = ?',
+    whereArgs: [cycleId],
+  );
+}
+
+//##CRUD opereations for Period
+
+Future<void> insertPeriod(Period period) async {
+  final db = await database;
+  await db.insert(
+    'period',
+    period.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
+
+Future<Period?> getPeriod(int periodId,int cycleId) async {
+  final db = await database;
+  final List<Map<String, dynamic>> maps = await db.query(
+    'period',
+    where: 'periodId = ? AND cycleId = ?',
+    whereArgs: [periodId,cycleId],
+  );
+
+  if (maps.isNotEmpty) {
+    return Period.fromMap(maps.first);
+  } else {
+    return null;
+  }
+}
+
+Future<void> updatePeriod(Period period) async {
+  final db = await database;
+  await db.update(
+    'period',
+    period.toMap(),
+    where: 'periodId = ?',
+    whereArgs: [period.periodId],
+  );
+}
+
+Future<void> deletePeriod(int periodId) async {
+  final db = await database;
+  await db.delete(
+    'period',
+    where: 'periodId = ?',
+    whereArgs: [periodId],
+  );  
 }
 }
