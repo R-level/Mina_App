@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mina_app/screens/home.dart';
-import 'package:mina_app/screens/second_page.dart';
-import 'package:mina_app/screens/third_page.dart';
-import 'package:mina_app/screens/fourth_page.dart';
+import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/features/feedback/view/feedback_view.dart';
 class MenuDrawer extends StatelessWidget {
   const MenuDrawer({
     super.key,
@@ -13,22 +11,34 @@ class MenuDrawer extends StatelessWidget {
     return Drawer(
      child:ListView(
        children: [
-       const DrawerHeader(child: Text('Hello'),
-       ),
+        const DrawerHeader(
+          
+          decoration: BoxDecoration(
+            color: Color.fromARGB(178, 132, 77, 151), // Optional: Add a background color
+          ),
+          child: Text(
+            'My Mina',
+            style: TextStyle(
+              fontSize: 24, // Increased font size
+              fontWeight: FontWeight.bold, // Optional: Make it bold
+              color: Colors.white, // Optional: Change text color
+            ),
+          ),
+        ),
        ListTile(
          title: const Text("Home Page"),
          onTap: () {
           Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const Home()));
+           Navigator.push(context, MaterialPageRoute(builder: (context) =>  Home()));
          },
        ),
-        ListTile(
-         title: const Text("Second Page"),
+       ListTile(
+         title: const Text("Feedback"),
          onTap: () {
            Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const SecondPage()));
+           Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackView()));
          },
-       ),ListTile(
+       ) /*,ListTile(
          title: const Text("Third Page"),
          onTap: () {
            Navigator.pop(context);
@@ -41,7 +51,7 @@ class MenuDrawer extends StatelessWidget {
            Navigator.push(context, MaterialPageRoute(builder: (context) => const FourthPage()));
          },
        ),
-     ])
+     */])
     );
   }
 }

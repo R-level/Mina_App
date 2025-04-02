@@ -1,13 +1,13 @@
 import 'dart:io' as io;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
-import 'package:mina_app/model/user.dart';
-import 'package:mina_app/model/cycle.dart';
-import 'package:mina_app/model/period.dart';
+import 'package:mina_app/data/model/model.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
+  //Create Singleton instance of the database
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
   static Database? _database;
@@ -24,10 +24,10 @@ class DatabaseHelper {
     databaseFactory = databaseFactoryFfi;
     final io.Directory appDocDir = await getApplicationDocumentsDirectory();
     String path = p.join(appDocDir.path, 'mina_database.db');
-    
+    if(kDebugMode) print('Database path: $path');
     return await openDatabase(
       path,
-      version: 1,
+      version:1,
       onCreate: _onCreate,
     );
   }
@@ -36,8 +36,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE user(
         userId INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
+        name STRING,
+        email STRING,
         age INTEGER,
         cycleLength INTEGER,
         periodLength INTEGER
@@ -48,10 +48,11 @@ class DatabaseHelper {
       CREATE TABLE cycle(
         cycleId INTEGER PRIMARY KEY AUTOINCREMENT,
         userId INTEGER,
-        startDate Date,
-        endDate Date,
+        startDate STRING,
+        endDate STRING,
         periodId INTEGER,
-        FOREIGN KEY (userId) REFERENCES user(userId)
+        FOREIGN KEY (userId) REFERENCES user(userId),
+        FOREIGN KEY (periodId) REFERENCES period(periodId)
       )
     ''');
     
@@ -59,55 +60,55 @@ class DatabaseHelper {
   CREATE TABLE period(
     periodId INTEGER PRIMARY KEY AUTOINCREMENT,
     cycleId INTEGER,
-    startDate Date,
-    endDate Date,
+    startDate STRING,
+    endDate STRING,
     FOREIGN KEY (cycleId) REFERENCES cycle(cycleId)
   )
 
 ''');
 
-//Alter cycles table to add period ID column
-await db.execute('''
-  ALTER TABLE cycle
-  ADD FOREIGN KEY (periodId) REFERENCES period(periodId)
-''');
 
-await db.execute('''CREATE TABLE day(
-    Date DATE PRIMARY KEY,
+
+await db.execute('''CREATE TABLE Day(
+    Date STRING PRIMARY KEY,
     CycleId INTEGER,
-    isPeriodDay BOOLEAN,
-    isPeriodStart BOOLEAN,
-    isPeriodEnd BOOLEAN,
+    isPeriodDay INTEGER,
+    isPeriodStart INTEGER,
+    isPeriodEnd INTEGER,
     NoteId INTEGER,
+    PeriodId INTEGER,
+    FOREIGN KEY (NoteId) REFERENCES Note (NoteId),
     FOREIGN KEY (CycleId) REFERENCES Cycle(CycleId),
     FOREIGN KEY (PeriodId) REFERENCES Period(PeriodId)
-)''');
+    )
+    ''');
 
 await db.execute('''CREATE TABLE Note (
     NoteId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Date DATE,
-    Text TEXT,
-    FOREIGN KEY (Date) REFERENCES Day(Date)'''
+    Date STRING,
+    Text STRING,
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+    )'''
 );
 
-await db.execute('''ALTER TABLE Day
-    ADD FOREIGN KEY (NoteId) REFERENCES Note (NoteId)''');
 
-//Alter day table to add foreign key for note ID column
 
 await db.execute('''CREATE TABLE Mood (
     MoodId INTEGER PRIMARY KEY AUTOINCREMENT,
     Date DATE,
-    Name TEXT,
-    FOREIGN KEY (Date) REFERENCES Day(Date)'''
+    Name STRING,
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+    )'''
 );
 
 await db.execute('''CREATE TABLE Symptom (
     SymptomId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Date TEXT,
-    Name TEXT,
+    Date STRING,
+    Name STRING,
     Severity INTEGER,
-    FOREIGN KEY (Date) REFERENCES Day(Date)''');
+    FOREIGN KEY (Date) REFERENCES Day(Date)
+    )'''
+);
   } 
 
 //##CRUD operations for User
@@ -121,6 +122,13 @@ await db.execute('''CREATE TABLE Symptom (
       userMap,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+  Future<List<User>> getUserList() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('user');
+    return List.generate(maps.length, (i) {
+      return User.fromMap(maps[i]);
+    });
   }
 
   Future<User?> getUser(int userId) async {
@@ -226,4 +234,27 @@ Future<void> deletePeriod(int periodId) async {
     whereArgs: [periodId],
   );  
 }
+
+Future<void> insertDayEntry(Day day) async {
+  final db = await database;
+  await db.insert(
+    'Day',
+    day.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
+Future<Day?> getDayEntry(DateTime date) async {
+  final db = await database;
+  final List<Map<String, dynamic>> maps = await db.query(
+    'Day',
+    where: 'Date = ?',
+    whereArgs: [date],
+  );
+
+  if (maps.isNotEmpty) {
+    return Day.fromMap(maps.first);
+  } else {
+    return null;
+  } 
+  }
 }
