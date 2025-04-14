@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/data/repositories/day_entry_repository.dart';
+import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
 
-class DayEntryView extends StatelessWidget {
-  final DateTime focusedDay;
+class DayEntryView extends StatefulWidget {
   const DayEntryView({super.key, required this.focusedDay});
+  final DateTime focusedDay;
+
+ 
+  
+  @override
+  State<DayEntryView> createState() => _DayEntryViewState();
+}
+
+class _DayEntryViewState extends State<DayEntryView> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +43,7 @@ class DayEntryView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Tracking for: ${focusedDay.toLocal()}".split(' ')[0],
+                "Tracking for: ${widget.focusedDay.toLocal()}".split(' ')[0],
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -85,6 +103,7 @@ class DayEntryView extends StatelessWidget {
                       print("Symptoms: $symptoms");
                       print("Notes: $notes");
 
+                     DayEntryRepository.instance.insertDayEntry(Day(date: widget.focusedDay, cycleId: 0, isPeriodDay: true, isPeriodStart: true, isPeriodEnd: false, noteId: 0));
                       // Show a success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Entry saved successfully!")),
@@ -101,3 +120,4 @@ class DayEntryView extends StatelessWidget {
     );
   }
 }
+

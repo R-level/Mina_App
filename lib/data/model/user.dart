@@ -1,13 +1,21 @@
 class User {
-  int? userId;
   String? name;
+  String? surname;
   String? email;
-  int? age;
-  int cycleLength; // average length of menstrual cycle
-  int periodLength; // average length of period
+  String? birthday;
+  int avgCycleLength; // average length of menstrual cycle
+  int avgPeriodLength; // average length of period
+  DateTime lastestCycleStart;
 
-  User({this.userId, this.name, this.email, this.age, this.cycleLength = 0, this.periodLength = 0});
-
+  User(
+      {this.name,
+      this.surname,
+      this.email,
+      this.birthday,
+      this.avgCycleLength = 0,
+      this.avgPeriodLength = 0,
+      DateTime? lastestCycleStart})
+      : lastestCycleStart = lastestCycleStart ?? DateTime(2025, 04, 07);
 
   void updateProfile({String? name, String? email, int? age}) {
     if (name != null) {
@@ -16,38 +24,38 @@ class User {
     if (email != null) {
       this.email = email;
     }
-    if (age != null) {
-      this.age = age;
+    if (birthday != null) {
+      this.birthday = birthday;
     }
   }
 
-  void setCycleLength(int cycleLength) {
-    this.cycleLength = cycleLength;
+  void setAvgCycleLength(int cycleLength) {
+    avgCycleLength = cycleLength;
   }
 
-  void setPeriodLength(int periodLength) {
-    this.periodLength = periodLength;
+  void setAvgPeriodLength(int periodLength) {
+    avgPeriodLength = periodLength;
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
       'name': name,
+      'surname': surname,
       'email': email,
-      'age': age,
-      'cycleLength': cycleLength,
-      'periodLength': periodLength,
+      'birthday': birthday,
+      'avgCycleLength': avgCycleLength,
+      'avgPeriodLength': avgPeriodLength,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      userId: map['userId'],
       name: map['name'],
+      surname: map['surname'],
       email: map['email'],
-      age: map['age'],
-      cycleLength: map['cycleLength'],
-      periodLength: map['periodLength'],
+      birthday: map['birthday'],
+      avgCycleLength: map['cycleLength'],
+      avgPeriodLength: map['periodLength'],
     );
   }
 }
