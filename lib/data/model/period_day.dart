@@ -1,3 +1,5 @@
+import 'package:mina_app/data/database/databaseHelper.dart';
+
 import 'day.dart';
 import 'symptom_list.dart';
 import 'mood_list.dart';
@@ -9,7 +11,6 @@ class PeriodDay extends Day {
 
   PeriodDay({
     required DateTime date,
-    required int userId,
     this.flowWeight,
     required this.isPeriodStartDay,
     required this.isPeriodEndDay,
@@ -17,7 +18,6 @@ class PeriodDay extends Day {
     SymptomList? listSymptoms,
     MoodList? listMoods,
   }) : super(
-          userId: userId,
           date: date,
           isPeriodDay: true,
           note: note,
@@ -37,7 +37,6 @@ class PeriodDay extends Day {
     bool intToBool(int value) => value == 1;
     return PeriodDay(
         date: DateTime.parse(map['Date']),
-        userId: map['userId'],
         flowWeight: map['FlowWeight'],
         isPeriodStartDay: intToBool(map['IsPeriodStartDay']),
         isPeriodEndDay: intToBool(map['IsPeriodEndDay']),

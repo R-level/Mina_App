@@ -1,37 +1,66 @@
-import 'package:mina_app/data/model/mood.dart';
+import 'package:equatable/equatable.dart';
 
-class MoodList {
-  final List<Mood> _moods = [];
-  MoodList() {
-    _moods.add(Mood(name: "happy"));
-    _moods.add(Mood(name: "sad"));
-    _moods.add(Mood(name: "ok"));
-    _moods.add(Mood(name: "angry"));
+class MoodList extends Equatable {
+  final List<String> moods;
+
+  const MoodList({this.moods = const []});
+
+  static const List<String> predefinedMoods = [
+    'Happy',
+    'Sad',
+    'Irritable',
+    'Anxious',
+    'Calm',
+    'Energetic',
+    'Tired',
+    'Emotional',
+    'Motivated',
+    'Stressed',
+    'Content',
+    'Moody'
+  ];
+
+  @override
+  List<Object?> get props => [moods];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'moods': moods,
+    };
   }
-  List<Mood> get moods => _moods;
+
+  factory MoodList.fromMap(Map<String, dynamic> map) {
+    return MoodList(
+      moods: List<String>.from(map['moods'] ?? []),
+    );
+  }
+
+  static MoodList fromString(String? moodsString) {
+    if (moodsString == null || moodsString.isEmpty) {
+      return const MoodList();
+    }
+    return MoodList(moods: moodsString.split(','));
+  }
 
   @override
   String toString() {
-    String s = '';
-    for (Mood mood in _moods) {
-      if (mood.getActive()) {
-        s += "${mood.getName()} ,";
-      }
-    }
-    return s;
+    return moods.join(',');
   }
 
-// Generate a MoodList from a comma-separated string
-  static MoodList fromString(String stringList) {
-    MoodList moodList = MoodList();
-    List<String> moodNames =
-        stringList.toLowerCase().split(',').map((s) => s.trim()).toList();
+  MoodList copyWith({List<String>? moods}) {
+    return MoodList(
+      moods: moods ?? this.moods,
+    );
+  }
 
-    for (Mood mood in moodList.moods) {
-      if (moodNames.contains(mood.getName().toLowerCase())) {
-        mood.setActive(true);
-      }
+  MoodList addMood(String mood) {
+    if (!moods.contains(mood)) {
+      return MoodList(moods: [...moods, mood]);
     }
-    return moodList;
+    return this;
+  }
+
+  MoodList removeMood(String mood) {
+    return MoodList(moods: moods.where((m) => m != mood).toList());
   }
 }

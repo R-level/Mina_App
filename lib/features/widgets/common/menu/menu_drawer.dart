@@ -1,57 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
-import 'package:mina_app/features/feedback/view/feedback_view.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mina_app/features/settings/view/settings_view.dart';
+import 'package:mina_app/features/statistics/view/statistics_view.dart';
+
 class MenuDrawer extends StatelessWidget {
-  const MenuDrawer({
-    super.key,
-  });
+  const MenuDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = null; //FirebaseAuth.instance.currentUser;
+
     return Drawer(
-     child:ListView(
-       children: [
-        const DrawerHeader(
-          
-          decoration: BoxDecoration(
-            color: Color.fromARGB(178, 132, 77, 151), // Optional: Add a background color
-          ),
-          child: Text(
-            'My Mina',
-            style: TextStyle(
-              fontSize: 24, // Increased font size
-              fontWeight: FontWeight.bold, // Optional: Make it bold
-              color: Colors.white, // Optional: Change text color
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: Text(user?.displayName ?? 'User'),
+            accountEmail: Text(user?.email ?? ''),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Text(
+                (user?.displayName ?? 'U').substring(0, 1).toUpperCase(),
+                style: const TextStyle(fontSize: 24.0),
+              ),
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
             ),
           ),
-        ),
-       ListTile(
-         title: const Text("Home Page"),
-         onTap: () {
-          Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) =>  Home()));
-         },
-       ),
-       ListTile(
-         title: const Text("Feedback"),
-         onTap: () {
-           Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackView()));
-         },
-       ) /*,ListTile(
-         title: const Text("Third Page"),
-         onTap: () {
-           Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const ThirdPage()));
-         },
-       ),ListTile(
-         title: const Text("Fourth Page"),
-         onTap: () {
-           Navigator.pop(context);
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const FourthPage()));
-         },
-       ),
-     */])
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.bar_chart),
+            title: const Text('Statistics'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatisticsView()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsView()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap:
+                  () {} /* async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pop(context); // Close drawer
+              }
+            }, */
+              ),
+        ],
+      ),
     );
   }
 }

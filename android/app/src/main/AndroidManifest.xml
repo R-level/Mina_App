@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="mina_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Added Firebase initialization -->
+        <!--meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" /-->
+        <!--meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorAccent" /-->
         <activity
             android:name=".MainActivity"
             android:exported="true"

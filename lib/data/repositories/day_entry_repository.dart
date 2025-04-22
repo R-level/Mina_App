@@ -18,13 +18,12 @@ class DayEntryRepository {
   }
 
   Future<Day?> getDayEntry(DateTime date) async {
-    try {
-      return await DatabaseHelper().getDay(date);
-    } catch (e) {
+    return await DatabaseHelper().getDay(date);
+    /* } catch (e) {
       // Log the error and rethrow a custom exception
       print('Error retrieving Day entry: $e');
       throw Exception('Failed to retrieve Day entry');
-    }
+    } */
   }
 
   Future<List<Day>> getAllDaysandPeriodDays() async {

@@ -1,10 +1,9 @@
 import 'dart:io' as io;
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:mina_app/data/model/model.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   //Create Singleton instance of the database
@@ -21,15 +20,22 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    databaseFactory = databaseFactoryFfi;
     final io.Directory appDocDir = await getApplicationDocumentsDirectory();
     String path = p.join(appDocDir.path, 'mina_database.db');
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade, // Add this line
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      await db
+          .execute('ALTER TABLE Day RENAME COLUMN ListSymptoms TO symptomList');
+    }
   }
 
   /// This is the callback function that is called when the database is first
@@ -48,7 +54,7 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE UserSettings(
-      Key STRING PRIMARY KEY
+      Key STRING PRIMARY KEY,
       Value STRING
       )
     ''');
@@ -57,8 +63,8 @@ class DatabaseHelper {
     Date STRING PRIMARY KEY,
     IsPeriodDay INTEGER,
     Note String,
-    ListSymptoms String,
-    ListMoods String, 
+    symptomList String,
+    moodlist String
     )
     ''');
 
@@ -74,13 +80,13 @@ class DatabaseHelper {
 
     await db.execute('''CREATE TABLE Mood (
     MoodId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name STRING,
+    Name STRING
     
     )''');
 
     await db.execute('''CREATE TABLE Symptom (
     SymptomId INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name STRING,
+    Name STRING
    
     )''');
   }
@@ -96,12 +102,10 @@ class DatabaseHelper {
   /// to initialize.
   Future<void> insertOrUpdateUserSetting(String key, String value) async {
     final db = await database;
-    //Insert or replace the setting
     await db.insert(
-      'Settings',
+      'UserSettings',
       {'Key': key, 'Value': value},
-      conflictAlgorithm: ConflictAlgorithm
-          .replace, // Replaces the row if the key already exists
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
@@ -119,7 +123,7 @@ class DatabaseHelper {
 
     // Query the setting
     final List<Map<String, dynamic>> result = await db.query(
-      'Settings',
+      'UserSettings',
       where: 'Key = ?',
       whereArgs: [key],
     );
@@ -140,14 +144,11 @@ class DatabaseHelper {
   /// to initialize.
   Future<Map<String, String>> getAllSettings() async {
     final db = await database;
-
-    // Query all settings
-    final List<Map<String, dynamic>> result = await db.query('Settings');
-
-    // Convert the result to a map
-    return {
-      for (var row in result) row['Key'] as String: row['Value'] as String
-    };
+    final List<Map<String, dynamic>> settings = await db.query('UserSettings');
+    return Map.fromEntries(
+      settings
+          .map((row) => MapEntry(row['Key'] as String, row['Value'] as String)),
+    );
   }
 
 //CRUD operations for Day table
@@ -176,11 +177,11 @@ class DatabaseHelper {
     final db = await database;
 
     List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.ListSymptoms,Day.ListMoods,
+      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
       LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
-      WHERE Date=?
+      WHERE Day.Date=?
       ''', [date.toIso8601String()]);
 
     if (result.isNotEmpty) {
@@ -280,7 +281,8 @@ class DatabaseHelper {
       SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.ListSymptoms,Day.ListMoods,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
-      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date''');
+      LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
+      ORDER BY Day.Date ASC''');
 
     // Map the results to a list of Day and PeriodDay objects
     return result.map<Day>((row) {
@@ -292,5 +294,19 @@ class DatabaseHelper {
         return Day.fromMap(row);
       }
     }).toList();
+  }
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // Clear all tables
+      await txn.delete('Day');
+      await txn.delete('PeriodDay');
+      await txn.delete('UserSettings');
+    });
+  }
+
+  Future<List<Day>> getAllDays() async {
+    return getCombinedDayAndPeriodDayRecords();
   }
 }

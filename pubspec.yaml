@@ -21,7 +21,7 @@ version: 1.0.0+1
 environment:
   sdk: ^3.5.3
 
-# Dependencies pecify other packages that your package needs in order to work.
+# Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
 # dependencies can be manually updated by changing the version numbers below to
@@ -45,7 +45,13 @@ dependencies:
   equatable: ^2.0.7
   flutter_bloc: ^9.1.0
   mockito: ^5.4.0
-
+  fl_chart: ^0.70.2
+  syncfusion_flutter_charts: ^29.1.38
+  flutter_local_notifications: ^19.1.0
+  timezone: ^0.10.0
+  csv: ^5.1.1
+  share_plus: ^7.2.1
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,96 @@
+# Mina App - Current State and Future Plans
+
+## Current Implementation
+
+### Data Layer
+1. Database Schema
+   - Day Table: Stores basic day information
+     - Date (PRIMARY KEY)
+     - IsPeriodDay (INTEGER)
+     - Note (TEXT)
+     - ListSymptoms (TEXT)
+     - ListMoods (TEXT)
+   
+   - PeriodDay Table: Stores period-specific information
+     - Date (FOREIGN KEY referencing Day.Date)
+     - FlowWeight (INTEGER)
+     - IsPeriodStartDay (INTEGER)
+     - IsPeriodEndDay (INTEGER)
+
+2. Model Classes
+   - Day: Base class for all day entries
+   - PeriodDay: Inherits from Day, adds period-specific fields
+   - MoodList: Manages mood tracking
+   - SymptomList: Manages symptom tracking
+   - Cycle: Represents a menstrual cycle
+
+3. Repositories
+   - DayEntryRepository: Handles Day and PeriodDay CRUD operations
+   - CycleRepository: Manages cycle calculations and history
+
+### UI Layer
+1. Views
+   - DayEntryView: Form for entering day information
+   - Dashboard: Main app interface (in progress)
+
+### Architecture
+- Using Bloc pattern for state management
+- Repository pattern for data access
+- Singleton pattern for database access
+
+## Planned Features
+
+1. Data Management
+   - [ ] Implement cycle prediction
+   - [ ] Add data export/import functionality
+   - [ ] Implement data backup
+   - [ ] Add data validation and sanitization
+
+2. UI Improvements
+   - [ ] Add calendar view for period tracking
+   - [ ] Implement mood tracking UI
+   - [ ] Add symptom tracking interface
+   - [ ] Create statistics view
+   - [ ] Add settings page
+
+3. Testing
+   - [ ] Complete unit tests for repositories
+   - [ ] Add integration tests
+   - [ ] Implement UI tests
+   - [ ] Add performance tests
+
+4. Features to Add
+   - [ ] User authentication
+   - [ ] Cloud sync
+   - [ ] Notifications/reminders
+   - [ ] Period predictions
+   - [ ] Cycle analysis
+   - [ ] PDF report generation
+
+## Technical Debt to Address
+1. Database
+   - [ ] Implement proper error handling
+   - [ ] Add database migrations
+   - [ ] Optimize queries
+   - [ ] Add indexing for better performance
+
+2. Code Quality
+   - [ ] Complete documentation
+   - [ ] Add logging
+   - [ ] Implement proper error boundaries
+   - [ ] Add input validation
+
+3. Testing
+   - [ ] Set up CI/CD pipeline
+   - [ ] Add code coverage requirements
+   - [ ] Implement smoke tests
+   - [ ] Add performance benchmarks
+
+## Next Steps (Priority Order)
+1. Complete basic CRUD operations for Day and PeriodDay
+2. Implement cycle calculation logic
+3. Add comprehensive error handling
+4. Complete unit tests for existing functionality
+5. Implement calendar view
+6. Add statistics calculation
+7. Create data visualization components

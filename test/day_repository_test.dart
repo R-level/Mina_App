@@ -3,7 +3,7 @@ import 'package:mina_app/data/model/mood_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
-import 'repository_test.mocks.dart';
+import 'day_repository_test.mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mina_app/data/model/day.dart';
 
@@ -21,7 +21,6 @@ void main() {
       // Arrange
       final day = Day(
         date: DateTime(2025, 4, 4),
-        userId: 1,
         isPeriodDay: true,
         note: "Today was a fine day",
         symptomList: SymptomList(),
@@ -31,7 +30,6 @@ void main() {
       // Mock the behavior
       when(mockRepository.insertDayEntry(day))
           .thenAnswer((_) async => Future.value());
-
       // Act
       await mockRepository.insertDayEntry(day);
 

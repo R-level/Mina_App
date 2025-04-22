@@ -6,7 +6,7 @@ import 'package:mina_app/data/model/user.dart';
 
 class Day {
   DateTime date;
-  int userId;
+
   bool isPeriodDay;
   String? note;
   SymptomList? symptomList;
@@ -14,7 +14,6 @@ class Day {
 
   Day(
       {required this.date,
-      required this.userId,
       required this.isPeriodDay,
       this.note,
       this.symptomList,
@@ -26,7 +25,6 @@ class Day {
 
     return {
       'date': dateString,
-      'userId': userId,
       'isPeriodDay': isPeriodDayInt,
       'note': note,
       'symptomList': symptomList?.toString(),
@@ -38,7 +36,6 @@ class Day {
     bool intToBool(int value) => value == 1;
     return Day(
       date: DateTime.parse(map['date']),
-      userId: map['userId'],
       isPeriodDay: intToBool(map['isPeriodDay']),
       note: map['note'],
       symptomList: SymptomList.fromString(map['symptomList']),

@@ -1,41 +1,66 @@
-import 'package:mina_app/data/model/symptom.dart';
+import 'package:equatable/equatable.dart';
 
-class SymptomList {
-  final List<Symptom> _symptoms = [];
-  SymptomList() {
-    _symptoms.add(Symptom(name: "Headache"));
-    _symptoms.add(Symptom(name: "Cramps"));
-    _symptoms.add(Symptom(name: "Nausea"));
-    _symptoms.add(Symptom(name: "Vomiting"));
-    _symptoms.add(Symptom(name: "Mental Fatigue"));
-    _symptoms.add(Symptom(name: "PMS"));
-    _symptoms.add(Symptom(name: "Stress"));
-    _symptoms.add(Symptom(name: "Sleepy"));
+class SymptomList extends Equatable {
+  final List<String> symptoms;
+
+  const SymptomList({this.symptoms = const []});
+
+  static const List<String> predefinedSymptoms = [
+    'Cramps',
+    'Headache',
+    'Bloating',
+    'Fatigue',
+    'Breast Tenderness',
+    'Back Pain',
+    'Acne',
+    'Nausea',
+    'Dizziness',
+    'Food Cravings',
+    'Insomnia',
+    'Muscle Pain'
+  ];
+
+  @override
+  List<Object?> get props => [symptoms];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'symptoms': symptoms,
+    };
   }
 
-  List<Symptom> get symptoms => _symptoms;
+  factory SymptomList.fromMap(Map<String, dynamic> map) {
+    return SymptomList(
+      symptoms: List<String>.from(map['symptoms'] ?? []),
+    );
+  }
+
+  static SymptomList fromString(String? symptomsString) {
+    if (symptomsString == null || symptomsString.isEmpty) {
+      return const SymptomList();
+    }
+    return SymptomList(symptoms: symptomsString.split(','));
+  }
 
   @override
   String toString() {
-    String s = '';
-    for (Symptom symptom in _symptoms) {
-      if (symptom.getActive()) {
-        s += "${symptom.getName()} ,";
-      }
-    }
-    return s;
+    return symptoms.join(',');
   }
 
-  static SymptomList fromString(String stringList) {
-    SymptomList symptomList = SymptomList();
+  SymptomList copyWith({List<String>? symptoms}) {
+    return SymptomList(
+      symptoms: symptoms ?? this.symptoms,
+    );
+  }
 
-    List<String> symptomNames =
-        stringList.toLowerCase().split(',').map((s) => s.trim()).toList();
-    for (Symptom symptom in symptomList.symptoms) {
-      if (symptomNames.contains(symptom.getName().toLowerCase())) {
-        symptom.setActive(true);
-      }
+  SymptomList addSymptom(String symptom) {
+    if (!symptoms.contains(symptom)) {
+      return SymptomList(symptoms: [...symptoms, symptom]);
     }
-    return symptomList;
+    return this;
+  }
+
+  SymptomList removeSymptom(String symptom) {
+    return SymptomList(symptoms: symptoms.where((s) => s != symptom).toList());
   }
 }
