@@ -274,6 +274,22 @@ class DatabaseHelper {
     );
   }
 
+  Future<List<Day>> getPeriodDaysInRange(DateTime start, DateTime end) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'days',
+      where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1',
+      whereArgs: [
+        start.toIso8601String(),
+        end.toIso8601String(),
+      ],
+    );
+
+    return List.generate(maps.length, (i) {
+      return Day.fromMap(maps[i]);
+    });
+  }
+
   //READ ALL DAY Records
   Future<List<Day>> getCombinedDayAndPeriodDayRecords() async {
     final db = await database;

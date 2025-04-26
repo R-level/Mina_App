@@ -17,13 +17,37 @@ class DayEntryRepository {
     }
   }
 
+  Future<void> insertPeriodDayEntry(PeriodDay periodDay) async {
+    try {
+      await DatabaseHelper()
+          .insertPeriodDay(periodDay); //method handles the insertion in
+      //both Day table and PeriodDay table.
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error inserting PeriodDay entry: $e');
+      throw Exception('Failed to insert PeriodDay entry');
+    }
+  }
+
+  getPeriodDaysInRange(DateTime startDate, DateTime endDate) async {
+    try {
+      return await DatabaseHelper().getPeriodDaysInRange(startDate, endDate);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error retrieving PeriodDays in range: $e');
+      throw Exception('Failed to retrieve PeriodDays in range');
+    }
+  }
+
   Future<Day?> getDayEntry(DateTime date) async {
-    return await DatabaseHelper().getDay(date);
-    /* } catch (e) {
+    try {
+      var day = await DatabaseHelper().getDay(date);
+      return day;
+    } catch (e) {
       // Log the error and rethrow a custom exception
       print('Error retrieving Day entry: $e');
       throw Exception('Failed to retrieve Day entry');
-    } */
+    }
   }
 
   Future<List<Day>> getAllDaysandPeriodDays() async {

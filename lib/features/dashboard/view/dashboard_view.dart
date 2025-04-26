@@ -28,14 +28,56 @@ class _DashboardViewState extends State<DashboardView> {
     _loadEventsFromDatabase();
   }
 
-  void _loadEventsFromDatabase() {
-    // Simulate loading events from a database
-    setState(() {
-      _events = {
-        DateTime.utc(2025, 4, 20): ['Period Day'],
-        DateTime.utc(2025, 4, 21): ['Period Day'],
-      };
-    });
+  Future<void> _loadEventsFromDatabase() async {
+    try {
+      // Get the current month's range
+      final DateTime firstDayOfMonth = DateTime.utc(
+        _focusedDay.year,
+        _focusedDay.month,
+        1,
+      );
+      final DateTime lastDayOfMonth = DateTime.utc(
+        _focusedDay.year,
+        _focusedDay.month + 1,
+        0,
+      );
+
+      // Fetch period days from repository
+      final List<Day> periodDays = await DayEntryRepository.instance
+          .getPeriodDaysInRange(firstDayOfMonth, lastDayOfMonth);
+
+      // Convert to events map
+      final Map<DateTime, List<String>> newEvents = {};
+
+      for (final day in periodDays) {
+        // Create a UTC date for consistent comparison
+        final eventDate = DateTime.utc(
+          day.date.year,
+          day.date.month,
+          day.date.day,
+        );
+
+        if (day.isPeriodDay) {
+          newEvents[eventDate] = ['Period Day'];
+        }
+      }
+
+      // Update state with new events
+      setState(() {
+        _events = newEvents;
+      });
+    } catch (e) {
+      debugPrint('Error loading events: $e');
+      // Optionally show an error message to the user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load period days'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   List<String> _getEventsForDay(DateTime day) {
@@ -264,22 +306,23 @@ class _DashboardViewState extends State<DashboardView> {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) {
         return FutureBuilder<Day?>(
-          future: DayEntryRepository.instance.getDayEntry(focusedDay),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Scaffold(
-                body: Center(child: Text('Error: ${snapshot.error}')),
-              );
-            } else {
-              return DayEntryView(
-                focusedDay: focusedDay,
-                existingDay: snapshot.data,
-              );
-            }
-          },
-        );
+            future: DayEntryRepository.instance.getDayEntry(focusedDay),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${snapshot.error}')),
+                );
+              }
+              if (snapshot.hasData) {
+                return DayEntryView(
+                  focusedDay: focusedDay,
+                  existingDay: snapshot.data,
+                );
+              }
+              return DayEntryView(focusedDay: focusedDay);
+            });
       },
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const begin = Offset(0.0, 1.0);

@@ -4,14 +4,16 @@ import 'day.dart';
 import 'symptom_list.dart';
 import 'mood_list.dart';
 
+enum FlowWeight { none, light, medium, heavy }
+
 class PeriodDay extends Day {
-  int? flowWeight;
+  FlowWeight flowWeight;
   bool isPeriodStartDay;
   bool isPeriodEndDay;
 
   PeriodDay({
     required DateTime date,
-    this.flowWeight,
+    required this.flowWeight,
     required this.isPeriodStartDay,
     required this.isPeriodEndDay,
     String? note,
@@ -27,7 +29,7 @@ class PeriodDay extends Day {
 
   Map<String, dynamic> toPeriodDayMap() {
     return {
-      'flowWeight': flowWeight,
+      'flowWeight': flowWeight.index,
       'isPeriodStartDay': isPeriodStartDay ? 1 : 0,
       'isPeriodEndDay': isPeriodEndDay ? 1 : 0,
     };
@@ -37,11 +39,20 @@ class PeriodDay extends Day {
     bool intToBool(int value) => value == 1;
     return PeriodDay(
         date: DateTime.parse(map['Date']),
-        flowWeight: map['FlowWeight'],
-        isPeriodStartDay: intToBool(map['IsPeriodStartDay']),
-        isPeriodEndDay: intToBool(map['IsPeriodEndDay']),
+        flowWeight: map['FlowWeight'] == null
+            ? FlowWeight.values[0]
+            : FlowWeight.values[map[
+                'FlowWeight']], //convert database value [0,1,2,3] to enum FlowWeight
+        isPeriodStartDay: map['IsPeriodStartDay'] == null
+            ? false
+            : intToBool(map['IsPeriodStartDay']),
+        isPeriodEndDay: map['IsPeriodEndDay'] == null
+            ? false
+            : intToBool(map['IsPeriodEndDay']),
         note: map['Note'],
         listSymptoms: SymptomList.fromString(map['ListSymptoms']),
         listMoods: MoodList.fromString(map['ListMoods']));
   }
+
+  static List<FlowWeight> get flowWeightValues => FlowWeight.values;
 }

@@ -24,24 +24,22 @@ class Day {
     int isPeriodDayInt = isPeriodDay ? 1 : 0;
 
     return {
-      'date': dateString,
-      'isPeriodDay': isPeriodDayInt,
-      'note': note,
+      'Date': dateString,
+      'IsPeriodDay': isPeriodDayInt,
+      'Note': note,
       'symptomList': symptomList?.toString(),
-      'moodList': moodList?.toString(),
+      'moodlist': moodList?.toString(),
     };
   }
 
   factory Day.fromMap(Map<String, dynamic> map) {
     bool intToBool(int value) => value == 1;
     return Day(
-      date: DateTime.parse(map['date']),
-      isPeriodDay: intToBool(map['isPeriodDay']),
-      note: map['note'],
+      date: DateTime.parse(map['Date']),
+      isPeriodDay: intToBool(map['IsPeriodDay']),
+      note: map['Note'],
       symptomList: SymptomList.fromString(map['symptomList']),
-      moodList: MoodList.fromString(
-        map['moodList'],
-      ),
+      moodList: MoodList.fromString(map['moodlist']),
     );
   }
 
