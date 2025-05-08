@@ -40,7 +40,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   provider: ^6.1.2
   path_provider: ^2.1.5
-  table_calendar: ^3.2.0
+  table_calendar: 
+    path: lib/local_libraries/table_calendar
   intl: any
   equatable: ^2.0.7
   flutter_bloc: ^9.1.0

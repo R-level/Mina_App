@@ -50,8 +50,8 @@ class PeriodDay extends Day {
             ? false
             : intToBool(map['IsPeriodEndDay']),
         note: map['Note'],
-        listSymptoms: SymptomList.fromString(map['ListSymptoms']),
-        listMoods: MoodList.fromString(map['ListMoods']));
+        listSymptoms: SymptomList.fromString(map['symptomList']),
+        listMoods: MoodList.fromString(map['moodlist']));
   }
 
   static List<FlowWeight> get flowWeightValues => FlowWeight.values;

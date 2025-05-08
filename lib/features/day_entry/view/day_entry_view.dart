@@ -197,7 +197,10 @@ class _DayEntryViewState extends State<DayEntryView> {
       if (_isPeriodDaySelected) {
         final periodDay = PeriodDay(
           date: widget.focusedDay,
-          flowWeight: PeriodDay.flowWeightValues[int.parse(_selectedFlow!)],
+          flowWeight: _selectedFlow != null
+              ? PeriodDay.flowWeightValues[int.parse(_selectedFlow!)]
+              : FlowWeight.none,
+          //TODO add validation for start and end days
           isPeriodStartDay: true,
           isPeriodEndDay: false,
           note: _notesController.text,
@@ -206,9 +209,10 @@ class _DayEntryViewState extends State<DayEntryView> {
         );
         DayEntryRepository.instance.insertPeriodDayEntry(periodDay);
       } else {
+        DayEntryRepository.instance.deletePeriodDayEntry(widget.focusedDay);
         final day = Day(
           date: widget.focusedDay,
-          isPeriodDay: _selectedFlow != null,
+          isPeriodDay: _isPeriodDaySelected,
           note: _notesController.text,
           symptomList: SymptomList(symptoms: _selectedSymptoms),
           moodList: MoodList(moods: _selectedMoods),
@@ -220,7 +224,7 @@ class _DayEntryViewState extends State<DayEntryView> {
         const SnackBar(content: Text("Entry saved successfully!")),
       );
 
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
 

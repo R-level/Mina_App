@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:mina_app/data/model/model.dart';
@@ -161,11 +162,19 @@ class DatabaseHelper {
 
   Future<void> insertDay(Day day) async {
     final db = await database;
-    await db.insert(
-      'Day',
-      day.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    try {
+      db.transaction((txn) async {
+        await txn.insert(
+          'Day',
+          day.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      });
+    } on Exception catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error inserting Day entry: $e');
+      throw Exception('Failed to insert Day entry');
+    }
   }
 
   //READ DAY Record
@@ -207,27 +216,44 @@ class DatabaseHelper {
         'Day',
         day.toMap(),
         where: 'Date = ?',
-        whereArgs: [day.date],
+        whereArgs: [day.date.toIso8601String()],
       );
       //Delete Period information
       // if day is changed from a Period Day to a non-Period Day
-      await db.delete('PeriodDay', where: 'Date=?', whereArgs: [day.date]);
-    } else {}
+      await db.delete('PeriodDay',
+          where: 'Date=?', whereArgs: [day.date.toIso8601String()]);
+    } else {
+      await db.update(
+        'Day',
+        day.toMap(),
+        where: 'Date = ?',
+        whereArgs: [day.date.toIso8601String()],
+      );
+    }
   }
 
   //DELETE DAY Record
-  Future<void> deleteDayEntry(DateTime date) async {
+  /// Deletes a day entry and its corresponding period day entry from the database for a given date.
+  ///
+  /// This method removes the records associated with the specified [date] from both the 'Day' and
+  /// 'PeriodDay' tables. It first deletes the entry from the 'PeriodDay' table to ensure referential
+  /// integrity, then deletes the entry from the 'Day' table. Returns the number of rows affected
+  /// in the 'Day' table.
+
+  Future<int> deleteDayEntry(DateTime date) async {
     final db = await database;
-    await db.delete(
-      'Day',
-      where: 'Date = ?',
-      whereArgs: [date],
-    );
+
     //Delete corresponding PeriodDay
     await db.delete(
       'PeriodDay',
       where: 'Date = ?',
-      whereArgs: [date],
+      whereArgs: [date.toIso8601String()],
+    );
+
+    return await db.delete(
+      'Day',
+      where: 'Date = ?',
+      whereArgs: [date.toIso8601String()],
     );
   }
 
@@ -255,29 +281,34 @@ class DatabaseHelper {
   /// considered a period day.
   ///
 
-  Future<void> deletePeriodDay(DateTime date) async {
+  Future<int> deletePeriodDay(DateTime date) async {
     final db = await database;
-
-    // Delete the PeriodDay entry
-    await db.delete(
-      'PeriodDay',
-      where: 'Date = ?',
-      whereArgs: [date],
-    );
-
-    //Update the Day table to mark it as not a period day
-    await db.update(
-      'Day',
-      {'IsPeriodDay': 0}, // Set IsPeriodDay to false
-      where: 'Date = ?',
-      whereArgs: [date],
-    );
+    try {
+      return await db.transaction((txn) async {
+        // Update the Day table to mark it as not a period day
+        await txn.update(
+          'Day',
+          {'IsPeriodDay': 0}, // Set IsPeriodDay to false
+          where: 'Date = ?',
+          whereArgs: [date.toIso8601String()],
+        );
+        // Delete the PeriodDay entry
+        return await txn.delete(
+          'PeriodDay',
+          where: 'Date = ?',
+          whereArgs: [date.toIso8601String()],
+        );
+      });
+    } catch (e) {
+      debugPrint('Error deleting PeriodDay: $e');
+      return 0; // Return 0 to indicate failure
+    }
   }
 
   Future<List<Day>> getPeriodDaysInRange(DateTime start, DateTime end) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'days',
+      'Day',
       where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1',
       whereArgs: [
         start.toIso8601String(),

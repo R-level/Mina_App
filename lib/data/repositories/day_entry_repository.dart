@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/model.dart';
 
@@ -58,6 +59,26 @@ class DayEntryRepository {
       // Log the error and rethrow a custom exception
       print('Error retrieving all Days and PeriodDays: $e');
       throw Exception('Failed to retrieve all Days and PeriodDays');
+    }
+  }
+
+  Future<int> deleteDayEntry(DateTime date) async {
+    try {
+      return await DatabaseHelper().deleteDayEntry(date);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      print('Error deleting Day entry: $e');
+      throw Exception('Failed to delete Day entry');
+    }
+  }
+
+  Future<int> deletePeriodDayEntry(DateTime date) async {
+    try {
+      return await DatabaseHelper().deletePeriodDay(date);
+    } catch (e) {
+      // Log the error and rethrow a custom exception
+      debugPrint('Error deleting PeriodDay entry: $e');
+      throw Exception('Failed to delete PeriodDay entry');
     }
   }
 }

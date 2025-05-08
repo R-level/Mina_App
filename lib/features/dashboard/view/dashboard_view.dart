@@ -20,6 +20,8 @@ class _DashboardViewState extends State<DashboardView> {
   late DateTime _focusedDay;
   DateTime? _selectedDay;
   Map<DateTime, List<String>> _events = {};
+  List<Day> periodDays = [];
+  Set<DateTime> periodDayDatesSet = {};
 
   @override
   void initState() {
@@ -43,10 +45,11 @@ class _DashboardViewState extends State<DashboardView> {
       );
 
       // Fetch period days from repository
-      final List<Day> periodDays = await DayEntryRepository.instance
+      periodDays = await DayEntryRepository.instance
           .getPeriodDaysInRange(firstDayOfMonth, lastDayOfMonth);
 
-      // Convert to events map
+      // Convert to set of DateTimes
+      Set<DateTime> periodSet = periodDays.map((day) => day.date).toSet();
       final Map<DateTime, List<String>> newEvents = {};
 
       for (final day in periodDays) {
@@ -64,19 +67,20 @@ class _DashboardViewState extends State<DashboardView> {
 
       // Update state with new events
       setState(() {
-        _events = newEvents;
+        // _events = newEvents;
+        periodDayDatesSet = periodSet;
       });
     } catch (e) {
       debugPrint('Error loading events: $e');
       // Optionally show an error message to the user
-      if (mounted) {
+      /* if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to load period days'),
             backgroundColor: Colors.red,
           ),
         );
-      }
+      } */
     }
   }
 
@@ -146,8 +150,8 @@ class _DashboardViewState extends State<DashboardView> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TableCalendar(
-                      firstDay: DateTime.utc(2010, 10, 16),
-                      lastDay: DateTime.utc(2030, 3, 14),
+                      firstDay: DateTime.utc(DateTime.now().year - 10, 1, 1),
+                      lastDay: DateTime.utc(DateTime.now().year + 10, 12, 31),
                       focusedDay: _focusedDay,
                       selectedDayPredicate: (day) =>
                           isSameDay(_selectedDay, day),
@@ -156,31 +160,73 @@ class _DashboardViewState extends State<DashboardView> {
                         formatButtonVisible: false,
                         titleCentered: true,
                       ),
-                      onDaySelected: (selectedDay, focusedDay) {
+                      onDaySelected: (selectedDay, focusedDay) async {
                         setState(() {
                           _selectedDay = selectedDay;
                           _focusedDay = focusedDay;
                         });
-                        Navigator.of(context).push(_createRoute(_focusedDay));
+                        final result = await Navigator.of(context)
+                            .push(_createRoute(_focusedDay));
+
+                        if (result == true) {
+                          _loadEventsFromDatabase();
+                          //context.read<DashboardBloc>().add(RefreshDashboard());
+                        }
                       },
-                      eventLoader: _getEventsForDay,
+                      //eventLoader: _getEventsForDay,
+                      calendarBuilders: CalendarBuilders(
+                        defaultBuilder: (context, day, focusedDay) {
+                          var isPeriodDay = periodDayDatesSet.contains(day);
+
+                          return Container(
+                            width: 50,
+                            decoration: BoxDecoration(
+                              color: isPeriodDay
+                                  ? Color.fromARGB(190, 244, 67, 54)
+                                  : Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  color:
+                                      isPeriodDay ? Colors.white : Colors.black,
+                                  // isPeriodDay ? Colors.white : Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                       calendarStyle: CalendarStyle(
                         withinRangeDecoration: const BoxDecoration(
                           color: Color.fromARGB(116, 255, 102, 199),
                           shape: BoxShape.circle,
                         ),
+                        selectedTextStyle: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                         rangeHighlightColor:
                             const Color.fromARGB(124, 255, 102, 224),
                         markerDecoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: null,
                           shape: BoxShape.circle,
                         ),
-                        todayDecoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
+                        todayDecoration: periodDayDatesSet
+                                .contains(normalizeDate(DateTime.now()))
+                            ? BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              )
+                            : BoxDecoration(
+                                color: Color.fromARGB(180, 33, 149, 243),
+                                shape: BoxShape.circle,
+                              ),
                         selectedDecoration: const BoxDecoration(
-                          color: Colors.green,
+                          color: Color.fromARGB(0, 76, 175, 79),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -285,6 +331,11 @@ class _DashboardViewState extends State<DashboardView> {
         drawer: const MenuDrawer(),
       ),
     );
+  }
+
+  //method to normalize DateTime objects in a list
+  DateTime normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   Widget _buildInfoSection(BuildContext context,
