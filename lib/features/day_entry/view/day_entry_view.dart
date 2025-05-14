@@ -58,137 +58,221 @@ class _DayEntryViewState extends State<DayEntryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Day Entry"),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Is Period Day?',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              Text(
-                "Tracking for: ${widget.focusedDay.toLocal()}".split(' ')[0],
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Row(children: [
-                Switch(
-                  value: _isPeriodDaySelected,
-                  onChanged: (value) {
-                    setState(() {
-                      _isPeriodDaySelected = value;
-                    });
-                  },
-                )
-              ]),
-              const SizedBox(height: 20),
+    return SafeArea(
+      child: Scaffold(
+          /* appBar: AppBar(
+            title: const Text("Day Entry"),
+          ), */
+          body: Flexible(
+        child: Container(
+          padding: const EdgeInsets.only(top: 16.0),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(55, 225, 194, 230),
+                Color.fromARGB(55, 241, 188, 206)
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          height: double.infinity,
+          width: double.infinity,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /* 
+                  UI should change to reflect the current state of the app
+                  at any given time.
+                  If it's a period day, it should show the period day UI
+                  If it's not a period day, it should show the regular day UI
+                  
+                  Global Menstrual Cyclestate is determined whether a PeriodisStartDay has passed or a PeriodisEndDay has passed has been selected
+                  The idea would be to display the period day UI when the period is in the middle of the cycle and the regular day UI when the period is not in the middle of the cycle
+                  Also historical records that are not period days will not have the ability to change to a period day.
+                  A period day will have the ability to change to a regular day.
+                  In this use case the user is presented with a calendar view of days with the ability to mark a day as a period day.
+                  The calendar view will show period days and regular days, and allow the user to mark any day as a period day.
+                  Once saved the app records the days that were marked as period days and processes any changes made.
+                  This process involves saving the changes to the database and updating the UI to reflect the changes.
+                  Changes most likely will include updating a day to a period day and vice-versa.
+                  Consecutive period days are grouped. The first and last of the period days are marked as special.
+                  Why are these days special? It's to help with calculating the days that are in a period.
+                  The average length 
+                  */
 
-              // Flow Intensity Section
-              const Text("Flow Intensity",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: "0", label: Text("None")),
-                  ButtonSegment(value: "1", label: Text("Light")),
-                  ButtonSegment(value: "2", label: Text("Medium")),
-                  ButtonSegment(value: "3", label: Text("Heavy")),
-                ],
-                selected: _selectedFlow != null ? {_selectedFlow!} : {},
-                emptySelectionAllowed: true,
-                onSelectionChanged: _isPeriodDaySelected
-                    ? (Set<String> newSelection) {
+                  const Text('Is it a Period Day?',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(
+                    "Tracking for: ${widget.focusedDay.toLocal()}"
+                        .split(' ')[0],
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Row(children: [
+                    Switch(
+                      value: _isPeriodDaySelected,
+                      onChanged: (value) {
                         setState(() {
-                          _selectedFlow = newSelection.isNotEmpty
-                              ? newSelection.first
-                              : null;
+                          _isPeriodDaySelected = value;
                         });
-                      }
-                    : null, // Disable selection if not a period day
-              ),
-              const SizedBox(height: 24),
+                      },
+                    )
+                  ]),
+                  const SizedBox(height: 20),
 
-              // Symptoms Section
-              const Text("Symptoms",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: SymptomList.predefinedSymptoms.map((symptom) {
-                  final isSelected = _selectedSymptoms.contains(symptom);
-                  return FilterChip(
-                    label: Text(symptom),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedSymptoms.add(symptom);
-                        } else {
-                          _selectedSymptoms.remove(symptom);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
+                  // Flow Intensity Section
+                  const Text("Flow Intensity",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: "0", label: Text("None")),
+                      ButtonSegment(value: "1", label: Text("Light")),
+                      ButtonSegment(
+                        value: "2",
+                        label: Text("Med"),
+                      ), //ButtonSegment(value: "2", label: Text("Medium")),
+                      ButtonSegment(value: "3", label: Text("Heavy")),
+                    ],
+                    selected: _selectedFlow != null ? {_selectedFlow!} : {},
+                    emptySelectionAllowed: true,
+                    onSelectionChanged: _isPeriodDaySelected
+                        ? (Set<String> newSelection) {
+                            setState(() {
+                              _selectedFlow = newSelection.isNotEmpty
+                                  ? newSelection.first
+                                  : null;
+                            });
+                          }
+                        : null, // Disable selection if not a period day
+                  ),
+                  const SizedBox(height: 24),
 
-              // Moods Section
-              const Text("Moods",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MoodList.predefinedMoods.map((mood) {
-                  final isSelected = _selectedMoods.contains(mood);
-                  return FilterChip(
-                    label: Text(mood),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedMoods.add(mood);
-                        } else {
-                          _selectedMoods.remove(mood);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
+                  // Symptoms Section
+                  const Text("Symptoms",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: SymptomList.predefinedSymptoms.map((symptom) {
+                      final isSelected = _selectedSymptoms.contains(symptom);
 
-              // Notes Section
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: "Notes",
-                  hintText: "Add any additional notes here...",
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
+                      // Add emoji mapping for symptoms
+                      final symptomEmojis = {
+                        'Cramps': '🤕',
+                        'Headache': '🤯',
+                        'Bloating': '🫃',
+                        'Fatigue': '😴',
+                        'Breast Tenderness': '🤱',
+                        'Back Pain': '🦴',
+                        'Acne': '😶‍🌫️',
+                        'Nausea': '🤢',
+                        'Dizziness': '😵',
+                        'Food Cravings': '🍫',
+                        'Insomnia': '🌙',
+                        'Muscle Pain': '💪',
+                      };
 
-              // Save Button
-              Center(
-                child: FilledButton.icon(
-                  onPressed: _saveEntry,
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save Entry"),
-                ),
+                      return FilterChip(
+                        label: Text('${symptomEmojis[symptom] ?? ''} $symptom'),
+                        selected: isSelected,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedSymptoms.add(symptom);
+                            } else {
+                              _selectedSymptoms.remove(symptom);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Moods Section
+                  const Text("Moods",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: MoodList.predefinedMoods.map((mood) {
+                      final isSelected = _selectedMoods.contains(mood);
+
+                      // Add emoji mapping for moods
+                      final moodEmojis = {
+                        'Happy': '😊',
+                        'Sad': '😢',
+                        'Irritable': '😤',
+                        'Anxious': '😨',
+                        'Calm': '😌',
+                        'Energetic': '⚡',
+                        'Tired': '😴',
+                        'Emotional': '😭',
+                        'Motivated': '🚀',
+                        'Stressed': '😰',
+                        'Relaxed': '😌',
+                        'Angry': '😡',
+                        'Excited': '🤩',
+                        'Disappointed': '😞',
+                        'Confused': '😕',
+                      };
+
+                      return FilterChip(
+                        label: Text('${moodEmojis[mood] ?? ''} $mood'),
+                        selected: isSelected,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedMoods.add(mood);
+                            } else {
+                              _selectedMoods.remove(mood);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Notes Section
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: const InputDecoration(
+                      labelText: "Notes",
+                      hintText: "Add any additional notes here...",
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save Button
+                  Center(
+                    child: FilledButton.icon(
+                      onPressed: _saveEntry,
+                      icon: const Icon(Icons.save),
+                      label: const Text("Save Entry"),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
+      )),
     );
   }
 

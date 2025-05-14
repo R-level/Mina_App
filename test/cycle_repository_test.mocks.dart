@@ -26,7 +26,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart' as _i2;
 
 class _FakeDatabase_0 extends _i1.SmartFake implements _i2.Database {
   _FakeDatabase_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+      : super(parent, parentInvocation);
 }
 
 /// A class which mocks [DatabaseHelper].
@@ -38,100 +38,85 @@ class MockDatabaseHelper extends _i1.Mock implements _i3.DatabaseHelper {
   }
 
   @override
-  _i4.Future<_i2.Database> get database =>
-      (super.noSuchMethod(
-            Invocation.getter(#database),
-            returnValue: _i4.Future<_i2.Database>.value(
-              _FakeDatabase_0(this, Invocation.getter(#database)),
-            ),
-          )
-          as _i4.Future<_i2.Database>);
+  _i4.Future<_i2.Database> get database => (super.noSuchMethod(
+        Invocation.getter(#database),
+        returnValue: _i4.Future<_i2.Database>.value(
+          _FakeDatabase_0(this, Invocation.getter(#database)),
+        ),
+      ) as _i4.Future<_i2.Database>);
 
   @override
   _i4.Future<void> insertOrUpdateUserSetting(String? key, String? value) =>
       (super.noSuchMethod(
-            Invocation.method(#insertOrUpdateUserSetting, [key, value]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+        Invocation.method(#insertOrUpdateUserSetting, [key, value]),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i4.Future<String?> getUserSetting(String? key) =>
-      (super.noSuchMethod(
-            Invocation.method(#getUserSetting, [key]),
-            returnValue: _i4.Future<String?>.value(),
-          )
-          as _i4.Future<String?>);
+  _i4.Future<String?> getUserSetting(String? key) => (super.noSuchMethod(
+        Invocation.method(#getUserSetting, [key]),
+        returnValue: _i4.Future<String?>.value(),
+      ) as _i4.Future<String?>);
 
   @override
-  _i4.Future<Map<String, String>> getAllSettings() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllSettings, []),
-            returnValue: _i4.Future<Map<String, String>>.value(
-              <String, String>{},
-            ),
-          )
-          as _i4.Future<Map<String, String>>);
+  _i4.Future<Map<String, String>> getAllSettings() => (super.noSuchMethod(
+        Invocation.method(#getAllSettings, []),
+        returnValue: _i4.Future<Map<String, String>>.value(
+          <String, String>{},
+        ),
+      ) as _i4.Future<Map<String, String>>);
 
   @override
-  _i4.Future<void> insertDay(_i5.Day? day) =>
-      (super.noSuchMethod(
-            Invocation.method(#insertDay, [day]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  _i4.Future<void> insertDay(_i5.Day? day) => (super.noSuchMethod(
+        Invocation.method(#insertDay, [day]),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i4.Future<_i5.Day?> getDay(DateTime? date) =>
-      (super.noSuchMethod(
-            Invocation.method(#getDay, [date]),
-            returnValue: _i4.Future<_i5.Day?>.value(),
-          )
-          as _i4.Future<_i5.Day?>);
+  _i4.Future<_i5.Day?> getDay(DateTime? date) => (super.noSuchMethod(
+        Invocation.method(#getDay, [date]),
+        returnValue: _i4.Future<_i5.Day?>.value(),
+      ) as _i4.Future<_i5.Day?>);
 
   @override
-  _i4.Future<void> updateDay(_i5.Day? day) =>
-      (super.noSuchMethod(
-            Invocation.method(#updateDay, [day]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  _i4.Future<void> updateDay(_i5.Day? day) => (super.noSuchMethod(
+        Invocation.method(#updateDay, [day]),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
-  @override
-  _i4.Future<void> deleteDayEntry(DateTime? date) =>
+/*  @override
+   _i4.Future<int> deleteDayEntry(DateTime? date) =>
       (super.noSuchMethod(
             Invocation.method(#deleteDayEntry, [date]),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i4.Future<void>); */
 
   @override
   _i4.Future<void> insertPeriodDay(_i5.PeriodDay? periodDay) =>
       (super.noSuchMethod(
-            Invocation.method(#insertPeriodDay, [periodDay]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+        Invocation.method(#insertPeriodDay, [periodDay]),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
-  @override
+/*   @override
   _i4.Future<void> deletePeriodDay(DateTime? date) =>
       (super.noSuchMethod(
             Invocation.method(#deletePeriodDay, [date]),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i4.Future<void>); */
 
   @override
   _i4.Future<List<_i5.Day>> getCombinedDayAndPeriodDayRecords() =>
       (super.noSuchMethod(
-            Invocation.method(#getCombinedDayAndPeriodDayRecords, []),
-            returnValue: _i4.Future<List<_i5.Day>>.value(<_i5.Day>[]),
-          )
-          as _i4.Future<List<_i5.Day>>);
+        Invocation.method(#getCombinedDayAndPeriodDayRecords, []),
+        returnValue: _i4.Future<List<_i5.Day>>.value(<_i5.Day>[]),
+      ) as _i4.Future<List<_i5.Day>>);
 }

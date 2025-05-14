@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mina_app/features/period/period_day_picker_view.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
@@ -34,6 +35,7 @@ class MinaApp extends StatelessWidget {
 
           //if (snapshot.hasData && snapshot.data == true) {
           return const DashboardView();
+          //return PeriodDayPickerView();
           // }
 
           // return const LoginView();

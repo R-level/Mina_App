@@ -16,8 +16,11 @@ class MoodList extends Equatable {
     'Emotional',
     'Motivated',
     'Stressed',
-    'Content',
-    'Moody'
+    'Relaxed',
+    'Angry',
+    'Excited',
+    'Disappointed',
+    'Confused',
   ];
 
   @override
