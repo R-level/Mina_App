@@ -13,7 +13,7 @@ class ExportService {
   ExportService({CycleRepository? cycleRepository})
       : _cycleRepository = cycleRepository ?? CycleRepository();
 
-  Future<void> exportCycleData() async {
+  /* Future<void> exportCycleData() async {
     try {
       // Get all cycle data
       final cycles = await _cycleRepository.calculateCycleHistory();
@@ -65,7 +65,7 @@ class ExportService {
           symptoms,
           moods,
           notes,
-        ]);
+        ]); 
       }
 
       // Convert to CSV
@@ -85,5 +85,5 @@ class ExportService {
 
   Future<void> exportPdfReport() async {
     // TODO: Implement PDF export with detailed visualizations
-  }
+  }*/
 }

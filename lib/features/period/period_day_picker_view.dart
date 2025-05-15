@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mina_app/data/database/databaseHelper.dart';
+import 'package:mina_app/data/model/day.dart';
+import 'period_picker_logic.dart';
 
 class PeriodDayPickerView extends StatefulWidget {
   @override
@@ -8,17 +11,29 @@ class PeriodDayPickerView extends StatefulWidget {
 
 class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   final Set<DateTime> selectedDates = {};
+  final Set<DateTime> oldPeriodSet = {};
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    //Get the average period length
 
+    //Get the days and populate oldPeriodSet
+    _loadPeriodDays();
     // Scroll to a specific position upon page load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollController.jumpTo(MediaQuery.of(context).size.height *
           0.45 *
-          7); // Each month is 382 pixels
+          3); // Each month is 382 pixels
+    });
+  }
+
+  void _loadPeriodDays() async {
+    List<Day> periodDays = await DatabaseHelper()
+        .getPeriodDaysInRange(DateTime(2025, 1, 1), DateTime(2026, 01, 01));
+    setState(() {
+      _processPeriodDaySet(periodDays);
     });
   }
 
@@ -38,13 +53,16 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                     '${DateFormat.E().format(now)}, ${DateFormat.MMMd().format(now)}',
                     style: const TextStyle(fontSize: 20)),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                       .map((d) => Expanded(
                               child: Center(
-                                  child: Text(
-                            d,
-                            style: const TextStyle(fontSize: 16),
+                                  child: Container(
+                            padding: const EdgeInsets.all(4),
+                            child: Text(
+                              d,
+                              style: const TextStyle(fontSize: 16),
+                            ),
                           ))))
                       .toList(),
                 ),
@@ -62,6 +80,60 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                   final month = months[index];
                   return buildMonthCalendar(month);
                 },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        }, //onPressed,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 42.0, vertical: 16.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                          ),
+                          backgroundColor:
+                              const Color.fromARGB(84, 33, 149, 243),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text("Close",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                        onPressed: () {
+                          PeriodPicker periodPicker = PeriodPicker();
+                          periodPicker.saveEditedDays(selectedDates);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 42.0, vertical: 16.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                          ),
+                          backgroundColor:
+                              const Color.fromARGB(81, 243, 33, 180),
+                          foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        child: Text(
+                          "Save",
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        )),
+                  ),
+                ],
               ),
             ),
           ],
@@ -84,6 +156,7 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
           ),
         ),
         GridView.builder(
+          padding: EdgeInsets.all(12),
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           itemCount: totalGridCount,
@@ -94,7 +167,8 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
             final day = index - startWeekday + 1;
             final date = DateTime(month.year, month.month, day);
-            final isSelected = selectedDates.contains(date);
+            final isSelected =
+                oldPeriodSet.contains(date) || selectedDates.contains(date);
 
             return GestureDetector(
               onTap: () {
@@ -170,6 +244,12 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
         ? DateTime(month.year + 1, 1, 1)
         : DateTime(month.year, month.month + 1, 1);
     return beginningNextMonth.subtract(Duration(days: 1)).day;
+  }
+
+  void _processPeriodDaySet(List<Day> periodDays) {
+    for (Day day in periodDays) {
+      oldPeriodSet.add(DateTime(day.date.year, day.date.month, day.date.day));
+    }
   }
 }
 

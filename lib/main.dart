@@ -34,8 +34,8 @@ class MinaApp extends StatelessWidget {
           }*/
 
           //if (snapshot.hasData && snapshot.data == true) {
-          return const DashboardView();
-          //return PeriodDayPickerView();
+          //return const DashboardView();
+          return PeriodDayPickerView();
           // }
 
           // return const LoginView();

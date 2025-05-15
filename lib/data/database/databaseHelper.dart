@@ -33,9 +33,12 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       await db
           .execute('ALTER TABLE Day RENAME COLUMN ListSymptoms TO symptomList');
+
+      await db.execute(
+          'CREATE TABLE Cycle (id INTEGER PRIMARY KEY AUTOINCREMENT, String startDate, String periodEndDate, String endDate)');
     }
   }
 

@@ -26,7 +26,7 @@ class DataExportService {
       ['Cycle Start Date', 'Cycle End Date', 'Period Length', 'Cycle Length']
     ];
 
-    for (final cycle in cycles) {
+/*     for (final cycle in cycles) {
       final cycleLength = cycle.endDate.difference(cycle.startDate).inDays;
       cycleRows.add([
         cycle.startDate.toIso8601String(),
@@ -34,7 +34,7 @@ class DataExportService {
         cycle.periodLength,
         cycleLength,
       ]);
-    }
+    } */
 
     List<List<dynamic>> dayRows = [
       [

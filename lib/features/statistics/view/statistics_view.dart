@@ -64,9 +64,9 @@ class _StatisticsViewState extends State<StatisticsView> {
                   children: [
                     _buildCycleLengthChart(),
                     const SizedBox(height: 24),
-                    _buildPeriodLengthChart(),
+                    //_buildPeriodLengthChart(),
                     const SizedBox(height: 24),
-                    _buildCycleHistory(),
+                    // _buildCycleHistory(),
                   ],
                 ),
               ),
@@ -84,8 +84,8 @@ class _StatisticsViewState extends State<StatisticsView> {
       );
     }
 
-    final cycleLengths =
-        _cycles.map((c) => c.endDate.difference(c.startDate).inDays).toList();
+    final cycleLengths = [];
+    // _cycles.map((c) => c.endDate.difference(c.startDate).inDays).toList();
 
     return Card(
       child: Padding(
@@ -164,7 +164,7 @@ class _StatisticsViewState extends State<StatisticsView> {
     );
   }
 
-  Widget _buildPeriodLengthChart() {
+  /*  Widget _buildPeriodLengthChart() {
     if (_cycles.isEmpty) {
       return const Card(
         child: Padding(
@@ -173,8 +173,8 @@ class _StatisticsViewState extends State<StatisticsView> {
         ),
       );
     }
-
-    final periodLengths =
+ */
+  /*    final periodLengths =
         _cycles.map((c) => c.periodLength.toDouble()).toList();
 
     return Card(
@@ -252,9 +252,10 @@ class _StatisticsViewState extends State<StatisticsView> {
         ),
       ),
     );
-  }
+  */
+}
 
-  Widget _buildCycleHistory() {
+/*  Widget _buildCycleHistory() {
     if (_cycles.isEmpty) {
       return const Card(
         child: Padding(
@@ -300,5 +301,5 @@ class _StatisticsViewState extends State<StatisticsView> {
         ),
       ),
     );
-  }
-}
+  } 
+}*/

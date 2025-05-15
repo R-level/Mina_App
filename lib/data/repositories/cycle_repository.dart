@@ -7,6 +7,7 @@ import 'package:mina_app/data/model/period_day.dart';
 class CycleRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
+//
   Future<List<Cycle>> calculateCycleHistory() async {
     try {
       List<Cycle> cycles = [];
@@ -29,7 +30,7 @@ class CycleRepository {
                 startDate: currentStartDate,
                 endDate: day.date.subtract(const Duration(
                     days: 1)), // End date is day before next start
-                periodLength: currentPeriodLength ?? 0,
+                periodEndDate: day.date,
               ));
             }
             currentStartDate = day.date;
@@ -50,7 +51,7 @@ class CycleRepository {
         cycles.add(Cycle(
           startDate: currentStartDate,
           endDate: endDate,
-          periodLength: currentPeriodLength ?? 0,
+          periodEndDate: endDate,
         ));
       }
 
@@ -79,6 +80,7 @@ class CycleRepository {
     }
   }
 
+/* 
   Future<int> calculateAvgPeriodLength() async {
     try {
       final cycles = await calculateCycleHistory();
@@ -100,7 +102,7 @@ class CycleRepository {
       return 0;
     }
   }
-
+ */
   Future<DateTime?> predictNextPeriod() async {
     try {
       final cycles = await calculateCycleHistory();

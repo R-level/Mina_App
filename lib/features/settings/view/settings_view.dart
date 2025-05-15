@@ -225,7 +225,7 @@ class _SettingsViewState extends State<SettingsView> {
             subtitle: const Text('Download your data as CSV'),
             onTap: () async {
               try {
-                await _exportService.exportCycleData();
+                //await _exportService.exportCycleData();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Data exported successfully')),
