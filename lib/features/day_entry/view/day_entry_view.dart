@@ -60,11 +60,10 @@ class _DayEntryViewState extends State<DayEntryView> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-          /* appBar: AppBar(
+        /* appBar: AppBar(
             title: const Text("Day Entry"),
           ), */
-          body: Flexible(
-        child: Container(
+        body: Container(
           padding: const EdgeInsets.only(top: 16.0),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -137,7 +136,7 @@ class _DayEntryViewState extends State<DayEntryView> {
                       ButtonSegment(value: "1", label: Text("Light")),
                       ButtonSegment(
                         value: "2",
-                        label: Text("Med"),
+                        label: Text("Medium"),
                       ), //ButtonSegment(value: "2", label: Text("Medium")),
                       ButtonSegment(value: "3", label: Text("Heavy")),
                     ],
@@ -272,7 +271,7 @@ class _DayEntryViewState extends State<DayEntryView> {
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 

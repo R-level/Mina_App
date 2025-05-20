@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:mina_app/data/model/model.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   //Create Singleton instance of the database
@@ -26,19 +27,21 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade, // Add this line
     );
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 4) {
-      await db
-          .execute('ALTER TABLE Day RENAME COLUMN ListSymptoms TO symptomList');
-
-      await db.execute(
-          'CREATE TABLE Cycle (id INTEGER PRIMARY KEY AUTOINCREMENT, String startDate, String periodEndDate, String endDate)');
+    if (oldVersion < 5) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS Cycle (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, 
+          startDate STRING, 
+          periodEndDate STRING, 
+          endDate STRING
+          )
+          ''');
     }
   }
 
@@ -66,9 +69,9 @@ class DatabaseHelper {
     await db.execute('''CREATE TABLE Day(
     Date STRING PRIMARY KEY,
     IsPeriodDay INTEGER,
-    Note String,
-    symptomList String,
-    moodlist String
+    Note STRING,
+    symptomList STRING,
+    moodlist STRING
     )
     ''');
 
@@ -79,6 +82,15 @@ class DatabaseHelper {
     IsPeriodStartDay INTEGER,
     IsPeriodEndDay INTEGER,
     FOREIGN KEY (Date) REFERENCES Day(Date)
+  )
+''');
+
+    await db.execute('''
+  CREATE TABLE Cycle (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    startDate STRING,
+    periodEndDate STRING,
+    endDate STRING
   )
 ''');
 
@@ -187,19 +199,15 @@ class DatabaseHelper {
   /// Otherwise, returns the day entry.
   Future<Day?> getDay(DateTime date) async {
     final db = await database;
-
-    List<Map<String, dynamic>> result = await db.rawQuery('''
+    final List<Map<String, dynamic>> result = await db.rawQuery('''
       SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
       LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
       WHERE Day.Date=?
       ''', [date.toIso8601String()]);
-
     if (result.isNotEmpty) {
       final Map<String, dynamic> row = result.first;
-
-      //Check if Day is a PeriodDay
       if (row['IsPeriodDay'] == 1) {
         return PeriodDay.fromMap(row);
       } else {
@@ -214,25 +222,29 @@ class DatabaseHelper {
   Future<void> updateDay(Day day) async {
     final db = await database;
 
-    if (!day.isPeriodDay) {
-      await db.update(
-        'Day',
-        day.toMap(),
-        where: 'Date = ?',
-        whereArgs: [day.date.toIso8601String()],
-      );
-      //Delete Period information
-      // if day is changed from a Period Day to a non-Period Day
-      await db.delete('PeriodDay',
-          where: 'Date=?', whereArgs: [day.date.toIso8601String()]);
-    } else {
-      await db.update(
-        'Day',
-        day.toMap(),
-        where: 'Date = ?',
-        whereArgs: [day.date.toIso8601String()],
-      );
-    }
+    await db.transaction((txn) async {
+      if (!day.isPeriodDay) {
+        await txn.update(
+          'Day',
+          day.toMap(),
+          where: 'Date = ?',
+          whereArgs: [day.date.toIso8601String()],
+        );
+        // Delete Period information if day is changed from a Period Day to a non-Period Day
+        await txn.delete(
+          'PeriodDay',
+          where: 'Date = ?',
+          whereArgs: [day.date.toIso8601String()],
+        );
+      } else {
+        await txn.update(
+          'Day',
+          day.toMap(),
+          where: 'Date = ?',
+          whereArgs: [day.date.toIso8601String()],
+        );
+      }
+    });
   }
 
   //DELETE DAY Record
@@ -246,33 +258,67 @@ class DatabaseHelper {
   Future<int> deleteDayEntry(DateTime date) async {
     final db = await database;
 
-    //Delete corresponding PeriodDay
-    await db.delete(
-      'PeriodDay',
-      where: 'Date = ?',
-      whereArgs: [date.toIso8601String()],
-    );
+    return await db.transaction((txn) async {
+      // Delete corresponding PeriodDay
+      await txn.delete(
+        'PeriodDay',
+        where: 'Date = ?',
+        whereArgs: [date.toIso8601String()],
+      );
 
-    return await db.delete(
-      'Day',
-      where: 'Date = ?',
-      whereArgs: [date.toIso8601String()],
-    );
+      // Delete from Day table and return the number of rows affected
+      return await txn.delete(
+        'Day',
+        where: 'Date = ?',
+        whereArgs: [date.toIso8601String()],
+      );
+    });
   }
 
 //CRUD operations for PeriodDay
-  Future<void> insertPeriodDay(PeriodDay periodDay) async {
+  Future<void> insertPeriodDay(PeriodDay periodDay, {Transaction? txn}) async {
     final db = await database;
-    await db.insert(
+    final executor = txn ?? db;
+
+    await executor.insert(
       'Day',
       periodDay.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     // Insert into PeriodDay table
-    await db.insert(
+    await executor.insert(
       'PeriodDay',
       periodDay.toPeriodDayMap(), // Includes only PeriodDay-specific columns
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<PeriodDay?> getPeriodDayByDate(DateTime date,
+      {Transaction? txn}) async {
+    final db = await database;
+    final executor = txn ?? db;
+    final List<Map<String, dynamic>> result = await executor.query(
+      'PeriodDay',
+      where: 'Date = ?',
+      whereArgs: [date.toIso8601String()],
+    );
+    if (result.isNotEmpty) {
+      return PeriodDay.fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+//updates existing PeriodDay entry
+  Future<void> updatePeriodDay(PeriodDay periodDay, {Transaction? txn}) async {
+    final db = await database;
+
+    final executor = txn ?? db;
+    await executor.update(
+      'PeriodDay',
+      periodDay.toPeriodDayMap(),
+      where: 'Date = ?',
+      whereArgs: [periodDay.date.toIso8601String()],
     );
   }
 
@@ -284,24 +330,24 @@ class DatabaseHelper {
   /// considered a period day.
   ///
 
-  Future<int> deletePeriodDay(DateTime date) async {
+  Future<int> deletePeriodDay(DateTime date, {Transaction? txn}) async {
     final db = await database;
+    final executor = txn ?? db;
+
     try {
-      return await db.transaction((txn) async {
-        // Update the Day table to mark it as not a period day
-        await txn.update(
-          'Day',
-          {'IsPeriodDay': 0}, // Set IsPeriodDay to false
-          where: 'Date = ?',
-          whereArgs: [date.toIso8601String()],
-        );
-        // Delete the PeriodDay entry
-        return await txn.delete(
-          'PeriodDay',
-          where: 'Date = ?',
-          whereArgs: [date.toIso8601String()],
-        );
-      });
+      // Update the Day table to mark it as not a period day
+      await executor.update(
+        'Day',
+        {'IsPeriodDay': 0}, // Set IsPeriodDay to false
+        where: 'Date = ?',
+        whereArgs: [date.toIso8601String()],
+      );
+      // Delete the PeriodDay entry
+      return await executor.delete(
+        'PeriodDay',
+        where: 'Date = ?',
+        whereArgs: [date.toIso8601String()],
+      );
     } catch (e) {
       debugPrint('Error deleting PeriodDay: $e');
       return 0; // Return 0 to indicate failure
@@ -313,12 +359,8 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> maps = await db.query(
       'Day',
       where: 'Date BETWEEN ? AND ? AND IsPeriodDay = 1',
-      whereArgs: [
-        start.toIso8601String(),
-        end.toIso8601String(),
-      ],
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
     );
-
     return List.generate(maps.length, (i) {
       return Day.fromMap(maps[i]);
     });
@@ -328,13 +370,11 @@ class DatabaseHelper {
   Future<List<Day>> getCombinedDayAndPeriodDayRecords() async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.ListSymptoms,Day.ListMoods,
+      SELECT Day.Date,Day.IsPeriodDay,Day.Note,Day.symptomList,Day.moodList,
       PeriodDay.FlowWeight,PeriodDay.IsPeriodStartDay,PeriodDay.IsPeriodEndDay
       FROM Day
       LEFT JOIN PeriodDay ON Day.Date = PeriodDay.Date
       ORDER BY Day.Date ASC''');
-
-    // Map the results to a list of Day and PeriodDay objects
     return result.map<Day>((row) {
       if (row['IsPeriodDay'] == 1) {
         // If IsPeriodDay is 1, create a PeriodDay object

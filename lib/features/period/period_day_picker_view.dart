@@ -1,17 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/day.dart';
+import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart';
+import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
 import 'period_picker_logic.dart';
 
+/*A view of days that a user can choose to be a period day
+//The purpose of this view is to clarify  the user's start and end days of their period
+//and allow them to choose the days that they want to be a period day
+//The interaction is triggered from the Day_Entry view upon tapping the 
+// appropriate button. 
+// The appropriate button [period_pick_trigger] on the Day_Entry view is determined by
+// 2 factors, app state and the day the user is looking at. 
+// The app state is determined by where in the 
+// cycle the user is. The day is determined by the day the Day_Entry view is for.
+// The Day entry UI will adjust to whether the day falls within the current cycle
+// and whether the day is a period day or not.
+For instance in the case of a Day falling in a previous cycle
+ that is not a period day, the [period_pick_trigger] button will not exist.
+The [period_pick_trigger] button is responsible for taking the user to this view. 
+It will only appear for days that:
+# are period start and end days within past menstrual cycles.
+# are in the current cycle
+    ->The [period_pick_trigger] will prompt user to choose a start period day if the current cycle state == PeriodEnded.
+    ->The [period_pick_trigger] will prompt user to choose an end period day if the current cycle state == currentPeriodOngoing.
+    ->The current cycle is demarcated by the latest periodStartday. Therefore upon saving 
+      the entries in this view the currentperiodStartday will be updated to reflect the latest current cycle
+      
+
+*/
 class PeriodDayPickerView extends StatefulWidget {
   @override
   _PeriodDayPickerViewState createState() => _PeriodDayPickerViewState();
 }
 
+/*
+This view will display ranges of period days. These ranges will be populated by the user's selected 
+period start and end days.
+Using data from the database, this view will populate the list of days that are period days
+The days will be displayed in a calendar view.
+The user can manipulate the days by tapping on them.
+The UI will respond to the user's interaction by updating 
+the ranges that the displays.
+ */
 class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
-  final Set<DateTime> selectedDates = {};
-  final Set<DateTime> oldPeriodSet = {};
+  //An empty list for days that are period days
+  Set<DateTime> selectedPeriodDateSet = {};
+  //A list of days that are period days
+  final Set<DateTime> oldPeriodDateSet = {};
+  //A list for Period days that were unselected and need to be deleted
+  final Set<DateTime> unselectedPeriodDateSet = {};
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -30,17 +71,36 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   }
 
   void _loadPeriodDays() async {
-    List<Day> periodDays = await DatabaseHelper()
-        .getPeriodDaysInRange(DateTime(2025, 1, 1), DateTime(2026, 01, 01));
+    DateTime now =
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
+        DateTime(1960, 1, 1), DateTime(now.year + 1, now.month + 2, 0));
+    // Use compute to process days in a background isolate
+    final Set<DateTime> processed =
+        await compute(_processPeriodDaySetIsolate, periodDays);
     setState(() {
-      _processPeriodDaySet(periodDays);
+      oldPeriodDateSet.clear();
+      oldPeriodDateSet.addAll(processed);
+      if (selectedPeriodDateSet.isEmpty) {
+        selectedPeriodDateSet = {...processed};
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final months = List.generate(12, (i) => DateTime(now.year, i + 1, 1));
+
+    final months = List<DateTime>.generate(
+            (now.year - 1960) * 12 + now.month,
+            (i) =>
+                DateTime(1960 + i ~/ 12, 1 + i % 12, 1 + i ~/ 12 * 12 ~/ 12 * 0)
+                    .add(Duration(days: 0)))
+        .map((date) => DateTime(
+            1960 + (date.month - 1 + date.year * 12 - 1960 * 12) ~/ 12,
+            (date.month - 1 + date.year * 12 - 1960 * 12) % 12 + 1,
+            1))
+        .toList();
 
     return Scaffold(
         appBar: AppBar(
@@ -114,7 +174,10 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                     child: TextButton(
                         onPressed: () {
                           PeriodPicker periodPicker = PeriodPicker();
-                          periodPicker.saveEditedDays(selectedDates);
+                          periodPicker.saveEditedDays(
+                              selectedPeriodDateSet, oldPeriodDateSet);
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => DashboardView()));
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.symmetric(
@@ -167,18 +230,23 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
 
             final day = index - startWeekday + 1;
             final date = DateTime(month.year, month.month, day);
-            final isSelected =
-                oldPeriodSet.contains(date) || selectedDates.contains(date);
+            var now = DateTime.now();
+            final isFutureDay =
+                date.isAfter(DateTime(now.year, now.month, now.day));
+            var isSelected =
+                selectedPeriodDateSet.contains(normalizeDate(date));
 
             return GestureDetector(
               onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    selectedDates.remove(date);
-                  } else {
-                    selectedDates.add(date);
-                  }
-                });
+                if (!isFutureDay) {
+                  setState(() {
+                    if (isSelected) {
+                      selectedPeriodDateSet.remove(normalizeDate(date));
+                    } else {
+                      selectedPeriodDateSet.add(normalizeDate(date));
+                    }
+                  });
+                }
               },
               child: Stack(
                 alignment: Alignment.center,
@@ -195,24 +263,30 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
                         children: [
                           Text('$day',
                               style: TextStyle(
-                                color: isSelected
-                                    ? const Color.fromARGB(255, 235, 43, 43)
-                                    : Colors.black87,
+                                color: isFutureDay
+                                    ? Colors.grey
+                                    : isSelected
+                                        ? const Color.fromARGB(255, 235, 43, 43)
+                                        : Colors.black87,
                                 fontWeight: FontWeight.w600,
                               )),
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              border: isSelected
-                                  ? Border.all(
-                                      color: Colors.pinkAccent, width: 2)
-                                  : Border.all(
-                                      color: const Color.fromARGB(
-                                          255, 116, 103, 107),
-                                      width: 2),
-                              color: isSelected
-                                  ? Colors.pinkAccent
-                                  : Colors.transparent,
+                              border: isFutureDay
+                                  ? Border.all(color: Colors.grey, width: 2)
+                                  : isSelected
+                                      ? Border.all(
+                                          color: Colors.pinkAccent, width: 2)
+                                      : Border.all(
+                                          color: const Color.fromARGB(
+                                              255, 116, 103, 107),
+                                          width: 2),
+                              color: isFutureDay
+                                  ? Colors.grey.shade200
+                                  : isSelected
+                                      ? Colors.pinkAccent
+                                      : Colors.transparent,
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -246,10 +320,11 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     return beginningNextMonth.subtract(Duration(days: 1)).day;
   }
 
-  void _processPeriodDaySet(List<Day> periodDays) {
-    for (Day day in periodDays) {
-      oldPeriodSet.add(DateTime(day.date.year, day.date.month, day.date.day));
-    }
+  // Helper function for compute()
+  static Set<DateTime> _processPeriodDaySetIsolate(List<Day> periodDays) {
+    return periodDays
+        .map((day) => DateTime(day.date.year, day.date.month, day.date.day))
+        .toSet();
   }
 }
 
@@ -290,59 +365,4 @@ class CustomRectRightClipper extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(CustomClipper<Rect> oldClipper) => true;
-}
-
-class AutoScrollGridView extends StatefulWidget {
-  @override
-  _AutoScrollGridViewState createState() => _AutoScrollGridViewState();
-}
-
-class _AutoScrollGridViewState extends State<AutoScrollGridView> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Scroll to a specific position upon page load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(150.0); // Example: Jump to 200 pixels
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Auto Scroll GridView'),
-      ),
-      body: GridView.builder(
-        controller: _scrollController, // Attach the ScrollController
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, // Number of columns
-          crossAxisSpacing: 4.0,
-          mainAxisSpacing: 4.0,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: 100, // Total number of items
-        itemBuilder: (context, index) {
-          return Container(
-            color: Colors.blue[(index % 9 + 1) * 100],
-            child: Center(
-              child: Text(
-                'Item $index',
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
 }

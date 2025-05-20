@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:mina_app/data/repositories/cycle_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class ExportService {
   final CycleRepository _cycleRepository;

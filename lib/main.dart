@@ -5,6 +5,7 @@ import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
 import 'package:mina_app/features/auth/view/login_view.dart';
 import 'package:mina_app/services/notification_service.dart';
+import 'package:mina_app/data/database/databaseHelper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ class MinaApp extends StatelessWidget {
 
           //if (snapshot.hasData && snapshot.data == true) {
           //return const DashboardView();
+          DatabaseHelper().clearAllData();
           return PeriodDayPickerView();
           // }
 

@@ -26,6 +26,7 @@ class PeriodDay extends Day {
           symptomList: listSymptoms,
           moodList: listMoods,
         );
+  static List<FlowWeight> get flowWeightValues => FlowWeight.values;
 
   Map<String, dynamic> toPeriodDayMap() {
     return {
@@ -54,5 +55,19 @@ class PeriodDay extends Day {
         listMoods: MoodList.fromString(map['moodlist']));
   }
 
-  static List<FlowWeight> get flowWeightValues => FlowWeight.values;
+  PeriodDay copyWith({
+    FlowWeight? flowWeight,
+    bool? isPeriodStartDay,
+    bool? isPeriodEndDay,
+  }) {
+    return PeriodDay(
+      date: date,
+      flowWeight: flowWeight ?? this.flowWeight,
+      isPeriodStartDay: isPeriodStartDay ?? this.isPeriodStartDay,
+      isPeriodEndDay: isPeriodEndDay ?? this.isPeriodEndDay,
+      note: note,
+      listSymptoms: symptomList,
+      listMoods: moodList,
+    );
+  }
 }
