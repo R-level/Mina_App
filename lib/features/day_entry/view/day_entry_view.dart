@@ -5,6 +5,7 @@ import 'package:mina_app/data/model/mood_list.dart';
 import 'package:mina_app/data/model/symptom_list.dart';
 import 'package:mina_app/data/repositories/day_entry_repository.dart';
 import 'package:mina_app/features/day_entry/bloc/day_entry_bloc.dart';
+import 'package:mina_app/features/period/period_day_picker_view.dart';
 
 class DayEntryView extends StatefulWidget {
   const DayEntryView({super.key, required this.focusedDay, this.existingDay});
@@ -114,13 +115,23 @@ class _DayEntryViewState extends State<DayEntryView> {
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Row(children: [
-                    Switch(
+                    /* Switch(
                       value: _isPeriodDaySelected,
                       onChanged: (value) {
                         setState(() {
                           _isPeriodDaySelected = value;
                         });
                       },
+                    ) */
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => PeriodDayPickerView(
+                                  focusedDay: widget.focusedDay)),
+                        );
+                      },
+                      child: Text("Period Day Picker"),
                     )
                   ]),
                   const SizedBox(height: 20),
@@ -315,5 +326,40 @@ class _DayEntryViewState extends State<DayEntryView> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  Route _createRoute(DateTime focusedDay) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return FutureBuilder<Day?>(
+            future: DayEntryRepository.instance.getDayEntry(focusedDay),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${snapshot.error}')),
+                );
+              }
+              if (snapshot.hasData) {
+                return DayEntryView(
+                  focusedDay: focusedDay,
+                  existingDay: snapshot.data,
+                );
+              }
+              return DayEntryView(focusedDay: focusedDay);
+            });
+      },
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.ease;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    );
   }
 }

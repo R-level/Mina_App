@@ -32,7 +32,14 @@ It will only appear for days that:
       
 
 */
+
+/*TODO: Get the date of the day being edited and check which number month it falls in. 
+        Make the day picker view display the month of the day being edited by scrolling to the
+        number month*/
 class PeriodDayPickerView extends StatefulWidget {
+  final DateTime? focusedDay;
+  const PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
+
   @override
   _PeriodDayPickerViewState createState() => _PeriodDayPickerViewState();
 }
@@ -58,15 +65,28 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   @override
   void initState() {
     super.initState();
-    //Get the average period length
-
-    //Get the days and populate oldPeriodSet
     _loadPeriodDays();
-    // Scroll to a specific position upon page load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(MediaQuery.of(context).size.height *
-          0.45 *
-          3); // Each month is 382 pixels
+      if (widget.focusedDay != null) {
+        final now = DateTime.now();
+        final months = List<DateTime>.generate(
+          (now.year) * 12 + now.month,
+          (i) => DateTime(now.year + i ~/ 12, 1 + i % 12, 1),
+        ).map((date) => DateTime(date.year, date.month, 1)).toList();
+
+        // Find the index of the focused month
+        final focusedMonth =
+            DateTime(widget.focusedDay!.year, widget.focusedDay!.month, 1);
+        final index = months.indexWhere((m) =>
+            m.year == focusedMonth.year && m.month == focusedMonth.month);
+
+        if (index != -1) {
+          _scrollController
+              .jumpTo(MediaQuery.of(context).size.height * 0.45 * index);
+        }
+      } else {
+        _scrollController.jumpTo(MediaQuery.of(context).size.height * 0.45 * 3);
+      }
     });
   }
 
@@ -90,20 +110,24 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-
+//TODO fix month
     final months = List<DateTime>.generate(
-            (now.year - 1960) * 12 + now.month,
+            /* (now.year - 1960) * 12 + now.month,
             (i) =>
                 DateTime(1960 + i ~/ 12, 1 + i % 12, 1 + i ~/ 12 * 12 ~/ 12 * 0)
                     .add(Duration(days: 0)))
-        .map((date) => DateTime(
-            1960 + (date.month - 1 + date.year * 12 - 1960 * 12) ~/ 12,
-            (date.month - 1 + date.year * 12 - 1960 * 12) % 12 + 1,
-            1))
+        .map((date) => DateTime(date.year, date.month, 1))
+        .toList(); */
+            (now.year) * 12 + now.month,
+            (i) => DateTime(
+                    now.year + i ~/ 12, 1 + i % 12, 1 + i ~/ 12 * 12 ~/ 12 * 0)
+                .add(Duration(days: 0)))
+        .map((date) => DateTime(date.year, date.month, 1))
         .toList();
 
     return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           toolbarHeight: 120,
           title: Container(
             child: Column(
