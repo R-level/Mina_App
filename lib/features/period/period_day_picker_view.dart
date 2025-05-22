@@ -4,9 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:mina_app/data/database/databaseHelper.dart';
 import 'package:mina_app/data/model/day.dart';
 import 'package:mina_app/features/dashboard/view/dashboard_view.dart';
+import 'package:mina_app/features/period/period_picker_logic.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/table_calendar.dart';
 import 'package:mina_app/local_libraries/table_calendar/lib/src/shared/utils.dart';
-import 'period_picker_logic.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mina_app/features/period/period_picker_logic.dart';
+import 'bloc/period_day_picker_bloc.dart';
+import 'bloc/period_day_picker_event.dart';
+import 'bloc/period_day_picker_state.dart';
 
 /*A view of days that a user can choose to be a period day
 //The purpose of this view is to clarify  the user's start and end days of their period
@@ -36,50 +41,47 @@ It will only appear for days that:
 /*TODO: Get the date of the day being edited and check which number month it falls in. 
         Make the day picker view display the month of the day being edited by scrolling to the
         number month*/
-class PeriodDayPickerView extends StatefulWidget {
+class PeriodDayPickerView extends StatelessWidget {
   final DateTime? focusedDay;
   const PeriodDayPickerView({Key? key, this.focusedDay}) : super(key: key);
 
   @override
-  _PeriodDayPickerViewState createState() => _PeriodDayPickerViewState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => PeriodDayPickerBloc()..add(PeriodDaysFetched()),
+      child: _PeriodDayPickerBody(focusedDay: focusedDay),
+    );
+  }
 }
 
-/*
-This view will display ranges of period days. These ranges will be populated by the user's selected 
-period start and end days.
-Using data from the database, this view will populate the list of days that are period days
-The days will be displayed in a calendar view.
-The user can manipulate the days by tapping on them.
-The UI will respond to the user's interaction by updating 
-the ranges that the displays.
- */
-class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
-  //An empty list for days that are period days
-  Set<DateTime> selectedPeriodDateSet = {};
-  //A list of days that are period days
-  final Set<DateTime> oldPeriodDateSet = {};
-  //A list for Period days that were unselected and need to be deleted
-  final Set<DateTime> unselectedPeriodDateSet = {};
-  final ScrollController _scrollController = ScrollController();
+class _PeriodDayPickerBody extends StatefulWidget {
+  final DateTime? focusedDay;
+  const _PeriodDayPickerBody({Key? key, this.focusedDay}) : super(key: key);
 
+  @override
+  State<_PeriodDayPickerBody> createState() => _PeriodDayPickerBodyState();
+}
+
+class _PeriodDayPickerBodyState extends State<_PeriodDayPickerBody> {
+  final ScrollController _scrollController = ScrollController();
+  late final months;
+  late final now;
   @override
   void initState() {
     super.initState();
-    _loadPeriodDays();
+    now = DateTime.now();
+    final startYear = 1960;
+    months = List<DateTime>.generate(
+      (now.year - startYear) * 12 + now.month,
+      (i) => DateTime(startYear + i ~/ 12, 1 + i % 12, 1),
+    ).map((date) => DateTime(date.year, date.month, 1)).toList();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.focusedDay != null) {
-        final now = DateTime.now();
-        final months = List<DateTime>.generate(
-          (now.year) * 12 + now.month,
-          (i) => DateTime(now.year + i ~/ 12, 1 + i % 12, 1),
-        ).map((date) => DateTime(date.year, date.month, 1)).toList();
-
-        // Find the index of the focused month
         final focusedMonth =
             DateTime(widget.focusedDay!.year, widget.focusedDay!.month, 1);
         final index = months.indexWhere((m) =>
             m.year == focusedMonth.year && m.month == focusedMonth.month);
-
         if (index != -1) {
           _scrollController
               .jumpTo(MediaQuery.of(context).size.height * 0.45 * index);
@@ -90,144 +92,127 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
     });
   }
 
-  void _loadPeriodDays() async {
-    DateTime now =
-        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    List<Day> periodDays = await DatabaseHelper().getPeriodDaysInRange(
-        DateTime(1960, 1, 1), DateTime(now.year + 1, now.month + 2, 0));
-    // Use compute to process days in a background isolate
-    final Set<DateTime> processed =
-        await compute(_processPeriodDaySetIsolate, periodDays);
-    setState(() {
-      oldPeriodDateSet.clear();
-      oldPeriodDateSet.addAll(processed);
-      if (selectedPeriodDateSet.isEmpty) {
-        selectedPeriodDateSet = {...processed};
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-//TODO fix month
-    final months = List<DateTime>.generate(
-            /* (now.year - 1960) * 12 + now.month,
-            (i) =>
-                DateTime(1960 + i ~/ 12, 1 + i % 12, 1 + i ~/ 12 * 12 ~/ 12 * 0)
-                    .add(Duration(days: 0)))
-        .map((date) => DateTime(date.year, date.month, 1))
-        .toList(); */
-            (now.year) * 12 + now.month,
-            (i) => DateTime(
-                    now.year + i ~/ 12, 1 + i % 12, 1 + i ~/ 12 * 12 ~/ 12 * 0)
-                .add(Duration(days: 0)))
-        .map((date) => DateTime(date.year, date.month, 1))
-        .toList();
-
-    return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          toolbarHeight: 120,
-          title: Container(
-            child: Column(
+    return BlocBuilder<PeriodDayPickerBloc, PeriodDayPickerState>(
+      builder: (context, state) {
+        if (state.status == PeriodDayPickerStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Scaffold(
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              toolbarHeight: 120,
+              title: Container(
+                child: Column(
+                  children: [
+                    Text('My period started'),
+                    Text(
+                        '${DateFormat.E().format(now)}, ${DateFormat.MMMd().format(now)}',
+                        style: const TextStyle(fontSize: 20)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children:
+                          ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                              .map((d) => Expanded(
+                                      child: Center(
+                                          child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Text(
+                                      d,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ))))
+                              .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            body: Column(
               children: [
-                Text('My period started'),
-                Text(
-                    '${DateFormat.E().format(now)}, ${DateFormat.MMMd().format(now)}',
-                    style: const TextStyle(fontSize: 20)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-                      .map((d) => Expanded(
-                              child: Center(
-                                  child: Container(
-                            padding: const EdgeInsets.all(4),
-                            child: Text(
-                              d,
-                              style: const TextStyle(fontSize: 16),
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: months.length,
+                    itemBuilder: (context, index) {
+                      final month = months[index];
+                      return buildMonthCalendar(
+                          context, month, state.selectedDays);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 42.0, vertical: 16.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(5)),
+                              ),
+                              backgroundColor:
+                                  const Color.fromARGB(84, 33, 149, 243),
+                              foregroundColor: Colors.white,
                             ),
-                          ))))
-                      .toList(),
+                            child: Text("Close",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ))),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextButton(
+                            onPressed: () {
+                              final bloc = context.read<PeriodDayPickerBloc>();
+                              PeriodPicker periodPicker = PeriodPicker();
+                              periodPicker.saveEditedDays(
+                                bloc.state.selectedDays,
+                                bloc.state.oldDays,
+                              );
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => DashboardView()));
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 42.0, vertical: 16.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(5)),
+                              ),
+                              backgroundColor:
+                                  const Color.fromARGB(81, 243, 33, 180),
+                              foregroundColor:
+                                  const Color.fromARGB(255, 0, 0, 0),
+                            ),
+                            child: Text(
+                              "Save",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            )),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: months.length,
-                itemBuilder: (context, index) {
-                  final month = months[index];
-                  return buildMonthCalendar(month);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 32.0, top: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        }, //onPressed,
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 42.0, vertical: 16.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(5)),
-                          ),
-                          backgroundColor:
-                              const Color.fromARGB(84, 33, 149, 243),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text("Close",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black,
-                            ))),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton(
-                        onPressed: () {
-                          PeriodPicker periodPicker = PeriodPicker();
-                          periodPicker.saveEditedDays(
-                              selectedPeriodDateSet, oldPeriodDateSet);
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => DashboardView()));
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 42.0, vertical: 16.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(5)),
-                          ),
-                          backgroundColor:
-                              const Color.fromARGB(81, 243, 33, 180),
-                          foregroundColor: const Color.fromARGB(255, 0, 0, 0),
-                        ),
-                        child: Text(
-                          "Save",
-                          style: TextStyle(
-                            fontSize: 16,
-                          ),
-                        )),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ));
+            ));
+      },
+    );
   }
 
-  Widget buildMonthCalendar(DateTime month) {
+  Widget buildMonthCalendar(BuildContext context, DateTime month,
+      Set<DateTime> selectedPeriodDateSet) {
     final days = daysInMonth(month);
     final startWeekday = DateTime(month.year, month.month, 1).weekday % 7;
     final totalGridCount = startWeekday + days;
@@ -257,29 +242,22 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
             var now = DateTime.now();
             final isFutureDay =
                 date.isAfter(DateTime(now.year, now.month, now.day));
-            var isSelected =
-                selectedPeriodDateSet.contains(normalizeDate(date));
+            var isSelected = selectedPeriodDateSet
+                .contains(DateTime(date.year, date.month, date.day));
 
             return GestureDetector(
               onTap: () {
                 if (!isFutureDay) {
-                  setState(() {
-                    if (isSelected) {
-                      selectedPeriodDateSet.remove(normalizeDate(date));
-                    } else {
-                      selectedPeriodDateSet.add(normalizeDate(date));
-                    }
-                  });
+                  context
+                      .read<PeriodDayPickerBloc>()
+                      .add(PeriodDayToggled(date));
                 }
               },
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   ClipRect(
-                    //Add a custom clipper here
-                    child: Container(
-                        //Add decorations here
-                        ),
+                    child: Container(),
                   ),
                   Center(
                     child: Container(
@@ -342,13 +320,6 @@ class _PeriodDayPickerViewState extends State<PeriodDayPickerView> {
         ? DateTime(month.year + 1, 1, 1)
         : DateTime(month.year, month.month + 1, 1);
     return beginningNextMonth.subtract(Duration(days: 1)).day;
-  }
-
-  // Helper function for compute()
-  static Set<DateTime> _processPeriodDaySetIsolate(List<Day> periodDays) {
-    return periodDays
-        .map((day) => DateTime(day.date.year, day.date.month, day.date.day))
-        .toSet();
   }
 }
 

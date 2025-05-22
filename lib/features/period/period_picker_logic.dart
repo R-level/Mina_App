@@ -8,6 +8,7 @@ import 'package:mina_app/data/model/day.dart';
 import 'package:flutter/foundation.dart';
 
 class PeriodPicker {
+  PeriodPicker();
   List<DateTime> deselecetedPeriodDates = [];
 
   //selectedDates are a list of all the dates that have been selected.
